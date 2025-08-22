@@ -1,0 +1,244 @@
+/// Modern RPS Client Builder with fluent API and dependency injection
+///
+/// This file implements the builder pattern for creating RpsClient instances
+/// with fluent API, dependency injection for all pluggable components, and
+/// factory methods for common SDK configurations.
+library;
+
+import 'dart:async';
+
+import 'package:rps_dart_sdk/src/core/core.dart';
+
+import '../auth/authentication_provider.dart';
+import '../cache/cache_manager.dart';
+import '../cache/cache_policy.dart';
+import '../cache/in_memory_cache_storage.dart';
+import '../transport/http_transport.dart';
+import '../retry/retry_policy.dart';
+
+import 'modern_rps_client.dart';
+
+/// Builder class for creating RpsClient instances with fluent API
+class RpsClientBuilder {
+  RpsConfiguration? _configuration;
+  HttpTransport? _transport;
+  RequestValidator? _validator;
+  CacheManager? _cacheManager;
+  LoggingManager? _logger;
+  RpsEventBus? _eventBus;
+  AuthenticationProvider? _authProvider;
+
+  /// Set the configuration for the client
+  RpsClientBuilder withConfiguration(RpsConfiguration configuration) {
+    _configuration = configuration;
+    return this;
+  }
+
+  /// Set the HTTP transport for the client
+  RpsClientBuilder withTransport(HttpTransport transport) {
+    _transport = transport;
+    return this;
+  }
+
+  /// Set the request validator for the client
+  RpsClientBuilder withValidator(RequestValidator validator) {
+    _validator = validator;
+    return this;
+  }
+
+  /// Set the cache manager for the client
+  RpsClientBuilder withCacheManager(CacheManager cacheManager) {
+    _cacheManager = cacheManager;
+    return this;
+  }
+
+  /// Set the logger for the client
+  RpsClientBuilder withLogger(LoggingManager logger) {
+    _logger = logger;
+    return this;
+  }
+
+  /// Set the event bus for the client
+  RpsClientBuilder withEventBus(RpsEventBus eventBus) {
+    _eventBus = eventBus;
+    return this;
+  }
+
+  /// Set the authentication provider for the client
+  RpsClientBuilder withAuthProvider(AuthenticationProvider authProvider) {
+    _authProvider = authProvider;
+    return this;
+  }
+
+  /// Factory method for basic configuration
+  static Future<RpsClient> basic({
+    required String baseUrl,
+    required String apiKey,
+    Duration connectTimeout = const Duration(seconds: 30),
+    Duration receiveTimeout = const Duration(seconds: 30),
+  }) async {
+    final builder = RpsClientBuilder();
+
+    // Create basic configuration
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(baseUrl)
+        .setApiKey(apiKey)
+        .setConnectTimeout(connectTimeout)
+        .setReceiveTimeout(receiveTimeout)
+        .build();
+
+    builder.withConfiguration(config);
+
+    return await builder.build();
+  }
+
+  /// Factory method for offline-first configuration
+  static Future<RpsClient> offlineFirst({
+    required String baseUrl,
+    required String apiKey,
+    Duration connectTimeout = const Duration(seconds: 30),
+    Duration receiveTimeout = const Duration(seconds: 30),
+    Duration maxCacheAge = const Duration(hours: 24),
+    int maxCacheSize = 1000,
+  }) async {
+    final builder = RpsClientBuilder();
+
+    // Create offline-first configuration
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(baseUrl)
+        .setApiKey(apiKey)
+        .setConnectTimeout(connectTimeout)
+        .setReceiveTimeout(receiveTimeout)
+        .setCachePolicy(CachePolicy.offlineFirst())
+        .build();
+
+    builder.withConfiguration(config);
+
+    return await builder.build();
+  }
+
+  /// Factory method for enterprise configuration with enhanced features
+  static Future<RpsClient> enterprise({
+    required String baseUrl,
+    required String apiKey,
+    AuthenticationProvider? authProvider,
+    Duration connectTimeout = const Duration(seconds: 30),
+    Duration receiveTimeout = const Duration(seconds: 30),
+    bool enableMetrics = true,
+    bool enableEvents = true,
+    RpsLogLevel logLevel = RpsLogLevel.info,
+  }) async {
+    final builder = RpsClientBuilder();
+
+    // Create enterprise configuration
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(baseUrl)
+        .setApiKey(apiKey)
+        .setConnectTimeout(connectTimeout)
+        .setReceiveTimeout(receiveTimeout)
+        .setRetryPolicy(
+          ExponentialBackoffRetryPolicy(
+            maxAttempts: 5,
+            baseDelay: const Duration(seconds: 2),
+          ),
+        )
+        .setCachePolicy(CachePolicy.disabled())
+        .build();
+
+    builder.withConfiguration(config);
+
+    // Add enterprise features
+    if (authProvider != null) {
+      builder.withAuthProvider(authProvider);
+    }
+
+    if (enableEvents) {
+      builder.withEventBus(RpsEventBus());
+    }
+
+    builder.withLogger(SimpleLoggingManager());
+
+    return await builder.build();
+  }
+
+  /// Build the RpsClient with all configured components
+  Future<RpsClient> build() async {
+    // Validate required components
+    if (_configuration == null) {
+      throw RpsError.configuration(message: 'Configuration is required');
+    }
+
+    _configuration!.validate();
+
+    // Create default components if not provided
+    if (_transport == null) {
+      _transport = await DioHttpTransport.create(
+        config: _configuration!,
+        authProvider: _authProvider,
+        logger: _logger,
+      );
+    }
+
+    if (_validator == null) {
+      _validator = DefaultRequestValidator();
+    }
+
+    if (_cacheManager == null &&
+        _configuration!.cachePolicy.enableOfflineCache) {
+      final storage = InMemoryCacheStorage();
+      _cacheManager = CacheManager(
+        storage: storage,
+        policy: _configuration!.cachePolicy,
+        logger: _logger,
+      );
+    }
+
+    // Create the client
+    final client = RpsClient.create(
+      config: _configuration!,
+      transport: _transport!,
+      validator: _validator!,
+      cacheManager: _cacheManager,
+      logger: _logger,
+      eventBus: _eventBus,
+    );
+
+    return client;
+  }
+
+  /// Validate builder configuration before creating client
+  void validateConfiguration() {
+    if (_configuration == null) {
+      throw RpsError.configuration(message: 'Configuration is required');
+    }
+
+    _configuration!.validate();
+
+    // Additional validation logic can be added here
+  }
+
+  /// Reset builder to initial state
+  RpsClientBuilder reset() {
+    _configuration = null;
+    _transport = null;
+    _validator = null;
+    _cacheManager = null;
+    _logger = null;
+    _eventBus = null;
+    _authProvider = null;
+    return this;
+  }
+
+  /// Create a copy of this builder
+  RpsClientBuilder copy() {
+    final builder = RpsClientBuilder();
+    builder._configuration = _configuration;
+    builder._transport = _transport;
+    builder._validator = _validator;
+    builder._cacheManager = _cacheManager;
+    builder._logger = _logger;
+    builder._eventBus = _eventBus;
+    builder._authProvider = _authProvider;
+    return builder;
+  }
+}

@@ -1,0 +1,20 @@
+name: rps_dart_sdk
+description: "A modern, production-ready Dart SDK for Remote Printing Service (RPS) with comprehensive offline support, intelligent retry mechanisms, and real-time monitoring."
+version: 1.0.0
+homepage: https://github.com/yourusername/rps_dart_sdk
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  # Network
+  dio: ^5.9.0
+
+  # Util
+  equatable: ^2.0.7
+  logger: ^2.6.1
+  shared_preferences: ^2.5.3
+
+dev_dependencies:
+  test: ^1.25.8
+  lints: ^5.0.0
