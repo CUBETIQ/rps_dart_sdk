@@ -49,7 +49,10 @@ Add the RPS Dart SDK to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  rps_dart_sdk: ^1.0.0
+  rps_dart_sdk:
+    git:
+      url: https://code.cubetiqs.com/cubetiq/rps_dart_sdk.git
+      ref: main
 ```
 
 Then run:
