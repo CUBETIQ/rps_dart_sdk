@@ -67,7 +67,7 @@ import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 
 void main() async {
   // Create a basic client
-  final client = ModernRpsClientBuilder.basic(
+  final client = RpsClientBuilder.basic(
     baseUrl: 'https://api.rps.example.com',
     apiKey: 'your-api-key',
   );
@@ -92,7 +92,7 @@ void main() async {
 ### Enterprise Configuration
 
 ```dart
-final client = ModernRpsClientBuilder.enterprise(
+final client = RpsClientBuilder.enterprise(
   baseUrl: 'https://enterprise.rps.example.com',
   apiKey: 'enterprise-key',
 )
@@ -108,7 +108,7 @@ final client = ModernRpsClientBuilder.enterprise(
 ### Offline-First Architecture
 
 ```dart
-final client = ModernRpsClientBuilder.offlineFirst(
+final client = RpsClientBuilder.offlineFirst(
   baseUrl: 'https://api.rps.example.com',
   apiKey: 'your-api-key',
 );
@@ -137,7 +137,7 @@ class CustomAuthProvider extends AuthenticationProvider {
   }
 }
 
-final client = ModernRpsClientBuilder()
+final client = RpsClientBuilder()
   .baseUrl('https://api.rps.example.com')
   .authProvider(CustomAuthProvider())
   .build();
@@ -186,7 +186,7 @@ final legacyClient = LegacyRpsClient(
 // New way (recommended)
 import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 
-final modernClient = ModernRpsClientBuilder.basic(
+final client = RpsClientBuilder.basic(
   baseUrl: 'https://api.rps.example.com',
   apiKey: 'your-api-key',
 );
@@ -204,7 +204,7 @@ final modernClient = ModernRpsClientBuilder.basic(
 ### Cache Configuration
 
 ```dart
-final client = ModernRpsClientBuilder()
+final client = RpsClientBuilder()
   .baseUrl('https://api.rps.example.com')
   .apiKey('your-api-key')
   .withCaching(
@@ -239,7 +239,7 @@ final noRetry = NoRetryPolicy();
 
 ```dart
 // Enable debug logging
-final client = ModernRpsClientBuilder.basic(
+final client = RpsClientBuilder.basic(
   baseUrl: 'https://api.rps.example.com',
   apiKey: 'your-api-key',
 )
