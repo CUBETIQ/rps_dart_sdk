@@ -215,12 +215,8 @@ class DioHttpTransport implements HttpTransport {
 
     try {
       final response = await _dio.post(
-        '', // Use empty path to hit the base URL directly (your webhook endpoint)
-        data: {
-          'type': request.type,
-          'data': request.data,
-          'metadata': request.metadata.toJson(),
-        },
+        '',
+        data: request.data,
         options: Options(
           headers: request.headers,
           extra: {'requestId': request.id, 'priority': request.priority},
