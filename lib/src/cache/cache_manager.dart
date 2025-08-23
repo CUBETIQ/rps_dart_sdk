@@ -126,9 +126,31 @@ class CacheManager {
       _logger?.info('Processing ${cachedRequests.length} cached requests');
 
       for (final cachedRequest in cachedRequests) {
-        // This would typically trigger a retry through the retry manager
-        // For now, we just log the request that needs processing
+        // NOTE: This method is called by the RpsClient which handles the actual retry
+        // Here we just ensure the requests are available for processing
         _logger?.debug('Request ready for retry: ${cachedRequest.id}');
+
+        // Update the retry count and last retry timestamp
+        try {
+          final updatedRequest = CachedRequest(
+            id: cachedRequest.id,
+            request: cachedRequest.request,
+            cachedAt: cachedRequest.cachedAt,
+            retryCount: cachedRequest.retryCount + 1,
+            lastRetryAt: DateTime.now(),
+          );
+
+          final key = _getRequestKey(cachedRequest.id);
+          await _storage.store(key, updatedRequest.toJson());
+          _logger?.debug(
+            'Updated retry metadata for request: ${cachedRequest.id}',
+          );
+        } catch (e) {
+          _logger?.error(
+            'Failed to update retry metadata for request: ${cachedRequest.id}',
+            error: e,
+          );
+        }
       }
     } catch (e) {
       _logger?.error('Failed to process cached requests', error: e);

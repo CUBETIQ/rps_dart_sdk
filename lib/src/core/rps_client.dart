@@ -232,7 +232,22 @@ class RpsClient {
       }
     }
 
-    // All retries exhausted
+    // All retries exhausted - cache the request for offline retry if network error
+    if (lastError != null &&
+        _cacheManager != null &&
+        (lastError.type == RpsErrorType.network ||
+            lastError.type == RpsErrorType.timeout)) {
+      try {
+        await _cacheManager.cacheRequest(request);
+        _logger?.info('Cached failed request for offline retry: ${request.id}');
+      } catch (e) {
+        _logger?.error(
+          'Failed to cache request for offline retry: ${request.id}',
+          error: e,
+        );
+      }
+    }
+
     throw lastError ?? RpsError.network(message: 'Unknown error occurred');
   }
 
