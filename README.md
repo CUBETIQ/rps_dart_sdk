@@ -87,13 +87,13 @@ import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 
 // 1. Simple client with in-memory cache (perfect for development/testing)
 final client = await RpsClientBuilder.createSimple(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
 
 // 2. Production client with persistent cache
 final client = await RpsClientBuilder.createProduction(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive, // or .hive
   cacheMaxAge: const Duration(hours: 24),
@@ -102,7 +102,7 @@ final client = await RpsClientBuilder.createProduction(
 
 // 3. High-performance client with Hive CE (best for heavy usage)
 final client = await RpsClientBuilder.createHighPerformance(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   hiveBoxName: 'rps_cache', // optional custom box name
   cacheMaxAge: const Duration(days: 7),
@@ -110,7 +110,7 @@ final client = await RpsClientBuilder.createHighPerformance(
 
 // 4. Offline-first client (automatically handles network issues)
 final client = await RpsClientBuilder.createOfflineFirst(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive, // persistent storage required
   cacheMaxAge: const Duration(days: 30),
@@ -136,7 +136,7 @@ Let the SDK choose the best storage for you:
 
 ```dart
 final client = await RpsClientBuilder.forWebhook(
-  url: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  url: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   needsPersistence: true,     // true = Hive
   isHighFrequency: true,
@@ -176,7 +176,7 @@ For advanced use cases, build your own configuration:
 ```dart
 // Method 1: Using RpsConfigurationBuilder
 final config = RpsConfigurationBuilder()
-    .setBaseUrl('https://rps.service.ctdn.net/third-party/rps/webhook')
+    .setBaseUrl('https://api.example.com/webhook')
     .setApiKey('your-api-key')
     .useHiveCache(
       maxAge: const Duration(days: 30),
@@ -204,7 +204,7 @@ final client = await RpsClientBuilder()
 
 // Method 2: Using individual cache storage methods
 final config2 = RpsConfigurationBuilder()
-    .setBaseUrl('https://rps.service.ctdn.net/third-party/rps/webhook')
+    .setBaseUrl('https://api.example.com/webhook')
     .setApiKey('your-api-key')
     // Choose one:
     .useInMemoryCache(maxAge: const Duration(hours: 1))
@@ -221,7 +221,7 @@ Configure how often cached (failed) requests are retried:
 
 ```dart
 final client = await RpsClientBuilder.createOfflineFirst(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive,
 );
@@ -269,7 +269,7 @@ Listen to client events for monitoring and debugging:
 
 ```dart
 final client = await RpsClientBuilder.createProduction(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
 
@@ -361,13 +361,13 @@ final client = await RpsClientBuilder.createSimple(
 ```dart
 // 🚀 Simple Development Setup
 final client = await RpsClientBuilder.createSimple(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
 
 // 🏭 Production Setup
 final client = await RpsClientBuilder.createProduction(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive,
   cacheMaxAge: const Duration(hours: 24),
@@ -376,7 +376,7 @@ final client = await RpsClientBuilder.createProduction(
 
 // ⚡ High-Performance Setup
 final client = await RpsClientBuilder.createHighPerformance(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   hiveBoxName: 'rps_cache', // optional
   cacheMaxAge: const Duration(days: 7),
@@ -385,7 +385,7 @@ final client = await RpsClientBuilder.createHighPerformance(
 
 // 📱 Offline-First Setup
 final client = await RpsClientBuilder.createOfflineFirst(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive,
   cacheMaxAge: const Duration(days: 30),
@@ -393,7 +393,7 @@ final client = await RpsClientBuilder.createOfflineFirst(
 
 // 🤖 Auto-Selection Setup
 final client = await RpsClientBuilder.forWebhook(
-  url: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  url: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   needsPersistence: true,
   isHighFrequency: true,
@@ -407,7 +407,7 @@ final client = await RpsClientBuilder.forWebhook(
 
 ```dart
 final config = RpsConfigurationBuilder()
-    .setBaseUrl('https://rps.service.ctdn.net/third-party/rps/webhook')
+    .setBaseUrl('https://api.example.com/webhook')
     .setApiKey('your-api-key')
 
     // Choose one of these cache storage methods:
@@ -458,7 +458,7 @@ The `autoSelectCacheStorage` method chooses storage based on your requirements:
 
 ```dart
 final config = RpsConfigurationBuilder()
-    .setBaseUrl('https://rps.service.ctdn.net/third-party/rps/webhook')
+    .setBaseUrl('https://api.example.com/webhook')
     .setApiKey('your-api-key')
     .useHiveCache(maxAge: const Duration(days: 30))
 
@@ -486,7 +486,7 @@ final config = RpsConfigurationBuilder()
 ```dart
 // Enable different log levels
 final client = await RpsClientBuilder.createProduction(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   logLevel: RpsLogLevel.debug, // none, error, warning, info, debug
 );
@@ -513,7 +513,7 @@ import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 Future<void> main() async {
   // Create a production-ready client
   final client = await RpsClientBuilder.createProduction(
-    webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+    webhookUrl: 'https://api.example.com/webhook',
     apiKey: 'your-api-key-here',
     storageType: CacheStorageType.hive,
     cacheMaxAge: const Duration(hours: 24),
@@ -565,7 +565,7 @@ void main() {
     setUp(() async {
       // Use in-memory cache for testing
       client = await RpsClientBuilder.createSimple(
-        webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+        webhookUrl: 'https://api.example.com/webhook',
         apiKey: 'test-api-key',
       );
     });
@@ -593,20 +593,20 @@ void main() {
 ```dart
 // ✅ Good for development/testing
 final devClient = await RpsClientBuilder.createSimple(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
 
 // ✅ Good for simple production apps
 final simpleClient = await RpsClientBuilder.createProduction(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive,
 );
 
 // ✅ Best for high-volume production apps
 final highPerfClient = await RpsClientBuilder.createHighPerformance(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
 ```
@@ -615,7 +615,7 @@ final highPerfClient = await RpsClientBuilder.createHighPerformance(
 
 ```dart
 final config = RpsConfigurationBuilder()
-    .setBaseUrl('https://rps.service.ctdn.net/third-party/rps/webhook')
+    .setBaseUrl('https://api.example.com/webhook')
     .setApiKey('your-api-key')
     .useHiveCache(
       maxAge: const Duration(days: 7),
@@ -671,7 +671,7 @@ dev_dependencies:
 ```dart
 // ✅ Solution: Increase timeout values
 final client = await RpsClientBuilder.createProduction(
-  webhookUrl: 'https://rps.service.ctdn.net/third-party/rps/webhook',
+  webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
   // Custom configuration with longer timeouts
 );
