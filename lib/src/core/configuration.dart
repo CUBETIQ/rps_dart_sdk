@@ -10,6 +10,7 @@ import 'dart:core';
 import '../retry/retry_policy.dart';
 import 'error.dart';
 import '../cache/cache_policy.dart';
+import '../cache/cache_storage_factory.dart';
 
 /// Abstract configuration interface that defines all configurable aspects
 /// of the RPS SDK. Implementations must provide all required settings
@@ -50,6 +51,11 @@ class RpsConfigurationBuilder {
   RetryPolicy? _retryPolicy;
   CachePolicy? _cachePolicy;
   final Map<String, String> _customHeaders = {};
+
+  // Cache storage configuration
+  CacheStorageType? _cacheStorageType;
+  Duration? _cacheMaxAge;
+  Map<String, dynamic>? _cacheConfig;
 
   /// Sets the base URL for the RPS service
   ///
@@ -144,6 +150,77 @@ class RpsConfigurationBuilder {
     return this;
   }
 
+  /// Set the cache storage type
+  RpsConfigurationBuilder setCacheStorageType(CacheStorageType type) {
+    _cacheStorageType = type;
+    return this;
+  }
+
+  /// Set the maximum age for cache entries
+  RpsConfigurationBuilder setCacheMaxAge(Duration maxAge) {
+    _cacheMaxAge = maxAge;
+    return this;
+  }
+
+  /// Set additional cache configuration
+  RpsConfigurationBuilder setCacheConfig(Map<String, dynamic> config) {
+    _cacheConfig = Map.from(config);
+    return this;
+  }
+
+  /// Configure cache for in-memory storage (fast, not persistent)
+  RpsConfigurationBuilder useInMemoryCache({
+    Duration maxAge = const Duration(hours: 1),
+  }) {
+    _cacheStorageType = CacheStorageType.inMemory;
+    _cacheMaxAge = maxAge;
+    return this;
+  }
+
+  /// Configure cache for SharedPreferences storage (persistent, small data)
+  RpsConfigurationBuilder useSharedPreferencesCache({
+    Duration maxAge = const Duration(hours: 24),
+  }) {
+    _cacheStorageType = CacheStorageType.hive;
+    _cacheMaxAge = maxAge;
+    return this;
+  }
+
+  /// Configure cache for Hive CE storage (persistent, high-performance, large data)
+  RpsConfigurationBuilder useHiveCache({
+    Duration maxAge = const Duration(days: 7),
+    String? boxName,
+    bool autoCompact = true,
+  }) {
+    _cacheStorageType = CacheStorageType.hive;
+    _cacheMaxAge = maxAge;
+    _cacheConfig = {
+      'boxName': boxName ?? 'rps_cache',
+      'autoCompact': autoCompact,
+    };
+    return this;
+  }
+
+  /// Auto-select cache storage based on use case
+  RpsConfigurationBuilder autoSelectCacheStorage({
+    required bool needsPersistence,
+    bool isHighFrequency = false,
+    bool isLargeData = false,
+    Duration? maxAge,
+  }) {
+    _cacheStorageType = CacheStorageFactory.getRecommendedStorageType(
+      needsPersistence: needsPersistence,
+      isHighFrequency: isHighFrequency,
+      isLargeData: isLargeData,
+    );
+
+    if (maxAge != null) {
+      _cacheMaxAge = maxAge;
+    }
+
+    return this;
+  }
+
   /// Adds a custom header that will be included with all requests
   ///
   /// Throws [RpsError] if key is empty or contains invalid characters
@@ -209,6 +286,15 @@ class RpsConfigurationBuilder {
       const Duration(seconds: 30),
     ).setCachePolicy(CachePolicy.offlineFirst());
   }
+
+  /// Get the selected cache storage type
+  CacheStorageType? get cacheStorageType => _cacheStorageType;
+
+  /// Get the cache max age
+  Duration? get cacheMaxAge => _cacheMaxAge;
+
+  /// Get the cache configuration
+  Map<String, dynamic>? get cacheConfig => _cacheConfig;
 
   /// Builds and validates the configuration
   ///

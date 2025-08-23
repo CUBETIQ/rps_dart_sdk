@@ -10,11 +10,15 @@ dependencies:
   # Network
   dio: ^5.9.0
 
+  # Cache Storage
+  hive_ce: ^2.11.3
+
   # Util
   equatable: ^2.0.7
   logger: ^2.6.1
-  shared_preferences: ^2.5.3
 
 dev_dependencies:
   test: ^1.25.8
   lints: ^5.0.0
+  hive_ce_generator: ^1.9.3
+  build_runner: ^2.4.7

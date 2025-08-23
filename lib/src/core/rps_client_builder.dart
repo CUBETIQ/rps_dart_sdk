@@ -12,11 +12,12 @@ import 'package:rps_dart_sdk/src/core/core.dart';
 import '../auth/authentication_provider.dart';
 import '../cache/cache_manager.dart';
 import '../cache/cache_policy.dart';
+import '../cache/cache_storage_factory.dart';
 import '../cache/in_memory_cache_storage.dart';
 import '../transport/http_transport.dart';
 import '../retry/retry_policy.dart';
 
-import 'modern_rps_client.dart';
+import 'rps_client.dart';
 
 /// Builder class for creating RpsClient instances with fluent API
 class RpsClientBuilder {
@@ -204,6 +205,175 @@ class RpsClientBuilder {
     );
 
     return client;
+  }
+
+  /// Create a simple client for basic webhook usage (in-memory cache)
+  static Future<RpsClient> createSimple({
+    required String webhookUrl,
+    required String apiKey,
+    Duration? connectTimeout,
+    Duration? receiveTimeout,
+  }) async {
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(webhookUrl)
+        .setApiKey(apiKey)
+        .useInMemoryCache()
+        .setConnectTimeout(connectTimeout ?? const Duration(seconds: 30))
+        .setReceiveTimeout(receiveTimeout ?? const Duration(seconds: 60))
+        .build();
+
+    // Create cache manager with in-memory storage
+    final storage = InMemoryCacheStorage();
+    final cacheManager = CacheManager(
+      storage: storage,
+      policy: config.cachePolicy,
+    );
+
+    return RpsClientBuilder()
+        .withConfiguration(config)
+        .withCacheManager(cacheManager)
+        .build();
+  }
+
+  /// Create a production client with persistent cache
+  static Future<RpsClient> createProduction({
+    required String webhookUrl,
+    required String apiKey,
+    CacheStorageType storageType = CacheStorageType.hive,
+    Duration? cacheMaxAge,
+    RpsLogLevel logLevel = RpsLogLevel.warning,
+  }) async {
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(webhookUrl)
+        .setApiKey(apiKey)
+        .setConnectTimeout(const Duration(seconds: 30))
+        .setReceiveTimeout(const Duration(seconds: 60))
+        .build();
+
+    // Create cache manager with selected storage type
+    final storage = await CacheStorageFactory.create(
+      type: storageType,
+      config: cacheMaxAge != null ? {'maxAge': cacheMaxAge} : null,
+    );
+    final cacheManager = CacheManager(
+      storage: storage,
+      policy: config.cachePolicy,
+    );
+    await cacheManager.initialize();
+
+    return RpsClientBuilder()
+        .withConfiguration(config)
+        .withCacheManager(cacheManager)
+        .withLogger(SimpleLoggingManager(level: logLevel))
+        .build();
+  }
+
+  /// Create a high-performance client with Hive CE cache
+  static Future<RpsClient> createHighPerformance({
+    required String webhookUrl,
+    required String apiKey,
+    String? hiveBoxName,
+    Duration? cacheMaxAge,
+    RpsLogLevel logLevel = RpsLogLevel.info,
+  }) async {
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(webhookUrl)
+        .setApiKey(apiKey)
+        .setConnectTimeout(const Duration(seconds: 30))
+        .setReceiveTimeout(const Duration(seconds: 60))
+        .build();
+
+    // Create cache manager with Hive CE storage
+    final storage = await CacheStorageFactory.create(
+      type: CacheStorageType.hive,
+      config: {
+        'boxName': hiveBoxName ?? 'rps_cache',
+        'maxAge': cacheMaxAge ?? const Duration(days: 7),
+      },
+    );
+    final cacheManager = CacheManager(
+      storage: storage,
+      policy: config.cachePolicy,
+    );
+    await cacheManager.initialize();
+
+    return RpsClientBuilder()
+        .withConfiguration(config)
+        .withCacheManager(cacheManager)
+        .withLogger(SimpleLoggingManager(level: logLevel))
+        .build();
+  }
+
+  /// Create a client optimized for offline-first usage
+  static Future<RpsClient> createOfflineFirst({
+    required String webhookUrl,
+    required String apiKey,
+    CacheStorageType storageType = CacheStorageType.hive,
+    Duration? cacheMaxAge,
+  }) async {
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(webhookUrl)
+        .setApiKey(apiKey)
+        .offlineFirst()
+        .build();
+
+    // Create cache manager with selected storage type
+    final storage = await CacheStorageFactory.create(
+      type: storageType,
+      config: cacheMaxAge != null ? {'maxAge': cacheMaxAge} : null,
+    );
+    final cacheManager = CacheManager(
+      storage: storage,
+      policy: config.cachePolicy,
+    );
+    await cacheManager.initialize();
+
+    return RpsClientBuilder()
+        .withConfiguration(config)
+        .withCacheManager(cacheManager)
+        .withLogger(SimpleLoggingManager(level: RpsLogLevel.debug))
+        .build();
+  }
+
+  /// Configure for specific webhook endpoint with auto cache selection
+  static Future<RpsClient> forWebhook({
+    required String url,
+    required String apiKey,
+    bool needsPersistence = true,
+    bool isHighFrequency = false,
+    bool isLargeData = false,
+    Duration? cacheMaxAge,
+    RpsLogLevel logLevel = RpsLogLevel.info,
+  }) async {
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(url)
+        .setApiKey(apiKey)
+        .setConnectTimeout(const Duration(seconds: 30))
+        .setReceiveTimeout(const Duration(seconds: 60))
+        .build();
+
+    // Auto-select storage type
+    final storageType = CacheStorageFactory.getRecommendedStorageType(
+      needsPersistence: needsPersistence,
+      isHighFrequency: isHighFrequency,
+      isLargeData: isLargeData,
+    );
+
+    final storage = await CacheStorageFactory.create(
+      type: storageType,
+      config: cacheMaxAge != null ? {'maxAge': cacheMaxAge} : null,
+    );
+    final cacheManager = CacheManager(
+      storage: storage,
+      policy: config.cachePolicy,
+    );
+    await cacheManager.initialize();
+
+    return RpsClientBuilder()
+        .withConfiguration(config)
+        .withCacheManager(cacheManager)
+        .withLogger(SimpleLoggingManager(level: logLevel))
+        .build();
   }
 
   /// Validate builder configuration before creating client

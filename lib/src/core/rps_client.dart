@@ -18,6 +18,7 @@ class RpsClient {
 
   bool _initialized = false;
   bool _disposed = false;
+  Timer? _cachedRequestsTimer;
 
   RpsClient._({
     required RpsConfiguration config,
@@ -236,10 +237,16 @@ class RpsClient {
   }
 
   /// Process cached requests asynchronously
-  void _processCachedRequestsAsync() {
+  void _processCachedRequestsAsync({
+    Duration interval = const Duration(minutes: 5),
+  }) {
     if (_cacheManager == null) return;
 
-    Timer.periodic(const Duration(minutes: 5), (timer) async {
+    // Cancel any existing timer
+    _cachedRequestsTimer?.cancel();
+
+    // Process cached requests with configurable interval
+    _cachedRequestsTimer = Timer.periodic(interval, (timer) async {
       if (_disposed) {
         timer.cancel();
         return;
@@ -272,6 +279,46 @@ class RpsClient {
         _logger?.error('Error processing cached requests', error: e);
       }
     });
+  }
+
+  /// Manually trigger processing of cached requests (call this when network is restored)
+  Future<void> processCachedRequests() async {
+    if (_cacheManager == null) return;
+
+    try {
+      final cachedRequests = await _cacheManager.getCachedRequests();
+      if (cachedRequests.isNotEmpty) {
+        _logger?.info(
+          'Manually processing ${cachedRequests.length} cached requests',
+        );
+
+        for (final cachedRequest in cachedRequests) {
+          try {
+            await sendRequest(cachedRequest.request);
+            await _cacheManager.removeCachedRequest(cachedRequest.id);
+            _logger?.debug(
+              'Successfully processed cached request: ${cachedRequest.id}',
+            );
+          } catch (e) {
+            _logger?.warning(
+              'Failed to process cached request: ${cachedRequest.id}',
+            );
+          }
+        }
+      }
+    } catch (e) {
+      _logger?.error('Error manually processing cached requests', error: e);
+    }
+  }
+
+  /// Configure the interval for processing cached requests
+  void setCachedRequestProcessingInterval(Duration interval) {
+    if (_cacheManager != null && _initialized) {
+      _logger?.info(
+        'Updating cached request processing interval to: ${interval.inSeconds} seconds',
+      );
+      _processCachedRequestsAsync(interval: interval);
+    }
   }
 
   /// Get client statistics
@@ -311,6 +358,9 @@ class RpsClient {
     _logger?.info('Disposing Modern RPS Client');
 
     try {
+      // Cancel the cached requests processing timer
+      _cachedRequestsTimer?.cancel();
+
       await _transport.dispose();
 
       _disposed = true;

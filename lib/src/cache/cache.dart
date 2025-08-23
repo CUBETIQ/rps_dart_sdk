@@ -10,4 +10,8 @@ export 'cache_policy.dart';
 export 'cache_manager.dart';
 
 // Storage implementations
-export 'shared_preferences_cache_storage.dart';
+export 'in_memory_cache_storage.dart';
+export 'hive_cache_storage.dart';
+
+// Storage factory
+export 'cache_storage_factory.dart';

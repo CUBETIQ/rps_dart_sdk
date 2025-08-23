@@ -5,8 +5,8 @@
 library rps_dart_sdk;
 
 // Core Modern Client
-export 'src/core/modern_rps_client.dart';
-export 'src/core/modern_rps_client_builder.dart';
+export 'src/core/rps_client.dart';
+export 'src/core/rps_client_builder.dart';
 export 'src/core/configuration.dart';
 export 'src/core/models.dart';
 export 'src/core/error.dart';
@@ -17,10 +17,8 @@ export 'src/core/events.dart';
 export 'src/auth/authentication_provider.dart';
 
 // Caching
-export 'src/cache/cache_manager.dart';
-export 'src/cache/cache_policy.dart';
-export 'src/cache/cache_storage.dart';
-export 'src/cache/in_memory_cache_storage.dart';
+export 'src/cache/cache.dart'; // This exports all cache implementations
+export 'src/cache/cache_storage_factory.dart';
 
 // Transport
 export 'src/transport/http_transport.dart';
