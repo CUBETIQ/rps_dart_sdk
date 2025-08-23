@@ -7,25 +7,12 @@ library;
 
 /// Enhanced request model with priority, headers, and metadata support
 class RpsRequest {
-  /// Unique identifier for the request
   final String id;
-
-  /// Type of the request (e.g., 'invoice', 'payment')
   final String type;
-
-  /// Request payload data
   final Map<String, dynamic> data;
-
-  /// Timestamp when the request was created
   final DateTime createdAt;
-
-  /// Custom headers for this specific request
   final Map<String, String> headers;
-
-  /// Request priority (higher numbers = higher priority)
   final int priority;
-
-  /// Additional metadata for the request
   final RpsMetadata metadata;
 
   RpsRequest({
@@ -120,25 +107,12 @@ class RpsRequest {
 
 /// Enhanced response model with timing, cache status, and detailed response info
 class RpsResponse {
-  /// HTTP status code
   final int statusCode;
-
-  /// Response payload data
   final Map<String, dynamic> data;
-
-  /// Response headers
   final Map<String, String> headers;
-
-  /// Time taken to receive the response
   final Duration responseTime;
-
-  /// Whether the response came from cache
   final bool fromCache;
-
-  /// Timestamp when the response was received
   final DateTime timestamp;
-
-  /// Request ID this response corresponds to
   final String? requestId;
 
   RpsResponse({
@@ -212,16 +186,9 @@ class RpsResponse {
 
 /// Metadata class for SDK version, platform, and custom data
 class RpsMetadata {
-  /// SDK version information
   final String sdkVersion;
-
-  /// Platform information (iOS, Android, Web, etc.)
   final String sdkPlatform;
-
-  /// Client identifier
   final String clientId;
-
-  /// Custom metadata fields
   final Map<String, dynamic> custom;
 
   const RpsMetadata({

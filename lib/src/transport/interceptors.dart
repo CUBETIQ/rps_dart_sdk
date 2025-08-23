@@ -7,7 +7,6 @@ library;
 import 'package:dio/dio.dart';
 import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 
-/// Authentication interceptor that adds authentication headers to requests
 class AuthenticationInterceptor extends Interceptor {
   final AuthenticationProvider _authProvider;
   final LoggingManager? _logger;
@@ -21,7 +20,6 @@ class AuthenticationInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     try {
-      // Check if auth provider requires refresh
       if (_authProvider.requiresRefresh && _authProvider.supportsRefresh) {
         final refreshed = await _authProvider.refreshCredentials();
         if (!refreshed) {
@@ -63,15 +61,12 @@ class AuthenticationInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle authentication-specific errors
     if (err.response?.statusCode == 401) {
       _logger?.warning('Received 401 Unauthorized response');
 
-      // If we support refresh, try once more
       if (_authProvider.supportsRefresh) {
         _logger?.info('Attempting credential refresh due to 401 response');
         // Note: In a real implementation, you might want to retry the request
-        // after refreshing credentials, but that requires more complex logic
       }
     }
 
@@ -79,7 +74,6 @@ class AuthenticationInterceptor extends Interceptor {
   }
 }
 
-/// Logging interceptor that logs request and response details
 class LoggingInterceptor extends Interceptor {
   final LoggingManager _logger;
   final bool _logRequestBody;
@@ -166,7 +160,6 @@ class LoggingInterceptor extends Interceptor {
   }
 }
 
-/// Request timing interceptor that adds timing information to requests
 class TimingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -195,7 +188,6 @@ class TimingInterceptor extends Interceptor {
   }
 }
 
-/// Retry interceptor that handles automatic retries for retryable errors
 class RetryInterceptor extends Interceptor {
   final int maxRetries;
   final Duration baseDelay;
@@ -244,7 +236,6 @@ class RetryInterceptor extends Interceptor {
 
     await Future.delayed(delay);
 
-    // Update retry count
     err.requestOptions.extra['retryCount'] = retryCount + 1;
 
     try {
@@ -260,12 +251,10 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool _shouldRetry(DioException err) {
-    // Check if error type is retryable
     if (retryableTypes.contains(err.type)) {
       return true;
     }
 
-    // Check if status code is retryable
     final statusCode = err.response?.statusCode;
     if (statusCode != null && retryableStatusCodes.contains(statusCode)) {
       return true;
@@ -275,7 +264,7 @@ class RetryInterceptor extends Interceptor {
   }
 
   Duration _calculateDelay(int retryCount) {
-    final multiplier = 1 << retryCount; // 2^retryCount
+    final multiplier = 1 << retryCount;
     return Duration(milliseconds: baseDelay.inMilliseconds * multiplier);
   }
 }

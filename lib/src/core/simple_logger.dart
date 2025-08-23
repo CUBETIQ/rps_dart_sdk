@@ -4,10 +4,8 @@
 /// on external logging packages.
 library;
 
-/// Log levels for the RPS SDK
 enum RpsLogLevel { debug, info, warning, error, fatal, off }
 
-/// Interface for logging implementations
 abstract class LoggingManager {
   void debug(String message, {Object? error, StackTrace? stackTrace});
   void info(String message, {Object? error, StackTrace? stackTrace});
@@ -17,7 +15,6 @@ abstract class LoggingManager {
   void dispose();
 }
 
-/// Simple console logging implementation
 class SimpleLoggingManager implements LoggingManager {
   final RpsLogLevel level;
   final bool enableColors;
@@ -110,7 +107,6 @@ class SimpleLoggingManager implements LoggingManager {
   }
 }
 
-/// No-op logging implementation for testing or disabled logging
 class NoOpLoggingManager implements LoggingManager {
   const NoOpLoggingManager();
 

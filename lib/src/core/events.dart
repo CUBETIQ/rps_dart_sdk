@@ -8,13 +8,8 @@ import 'dart:async';
 
 /// Base class for all RPS SDK events
 abstract class RpsEvent {
-  /// Timestamp when the event occurred
   final DateTime timestamp;
-
-  /// Event type identifier
   String get eventType;
-
-  /// Event data as a map for serialization
   Map<String, dynamic> get data;
 
   RpsEvent({DateTime? timestamp}) : timestamp = timestamp ?? DateTime.now();

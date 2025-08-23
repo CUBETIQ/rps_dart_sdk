@@ -13,12 +13,12 @@ A modern, production-ready Dart SDK for Remote Printing Service (RPS) with compr
 - Event-driven architecture for real-time monitoring
 - Comprehensive error handling and recovery
 
-� **Multi-Storage Cache System**
+⚙️ **Multi-Storage Cache System**
 
 - **In-Memory Cache**: Lightning-fast, perfect for development
 - **Hive CE**: High-performance storage with isolate support for production
 
-�🔄 **Intelligent Retry Logic**
+🔄 **Intelligent Retry Logic**
 
 - Exponential backoff with jitter
 - Configurable retry policies

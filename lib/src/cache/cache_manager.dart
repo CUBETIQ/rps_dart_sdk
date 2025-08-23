@@ -25,7 +25,6 @@ class CacheManager {
     _policy.validate();
   }
 
-  /// Initialize the cache manager
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -40,7 +39,6 @@ class CacheManager {
     }
   }
 
-  /// Cache a request for offline retry
   Future<void> cacheRequest(RpsRequest request) async {
     await _ensureInitialized();
 
@@ -69,7 +67,6 @@ class CacheManager {
     }
   }
 
-  /// Get all cached requests for retry (sorted from oldest to newest)
   Future<List<CachedRequest>> getCachedRequests() async {
     await _ensureInitialized();
 
@@ -92,7 +89,6 @@ class CacheManager {
         }
       }
 
-      // Sort cached requests from oldest to newest (FIFO processing)
       cachedRequests.sort((a, b) => a.cachedAt.compareTo(b.cachedAt));
 
       _logger?.debug(
@@ -105,7 +101,6 @@ class CacheManager {
     }
   }
 
-  /// Remove a cached request after successful retry
   Future<void> removeCachedRequest(String requestId) async {
     await _ensureInitialized();
 
@@ -118,7 +113,6 @@ class CacheManager {
     }
   }
 
-  /// Process all cached requests (typically called when connectivity restored)
   Future<void> processCachedRequests() async {
     await _ensureInitialized();
 
@@ -132,8 +126,6 @@ class CacheManager {
       _logger?.info('Processing ${cachedRequests.length} cached requests');
 
       for (final cachedRequest in cachedRequests) {
-        // NOTE: This method is called by the RpsClient which handles the actual retry
-        // Here we just ensure the requests are available for processing
         _logger?.debug('Request ready for retry: ${cachedRequest.id}');
 
         // Update the retry count and last retry timestamp
@@ -163,7 +155,6 @@ class CacheManager {
     }
   }
 
-  /// Cache a successful response
   Future<void> cacheResponse(String key, RpsResponse response) async {
     await _ensureInitialized();
 
@@ -193,7 +184,6 @@ class CacheManager {
     }
   }
 
-  /// Retrieve a cached response
   Future<RpsResponse?> getCachedResponse(String key) async {
     await _ensureInitialized();
 
@@ -227,7 +217,6 @@ class CacheManager {
     }
   }
 
-  /// Clear all cached data
   Future<void> clearCache() async {
     await _ensureInitialized();
 
@@ -240,7 +229,6 @@ class CacheManager {
     }
   }
 
-  /// Get cache statistics
   Future<CacheStatistics> getStatistics() async {
     await _ensureInitialized();
 
@@ -276,7 +264,6 @@ class CacheManager {
     }
   }
 
-  /// Dispose of the cache manager
   Future<void> dispose() async {
     try {
       await _storage.dispose();
@@ -287,7 +274,6 @@ class CacheManager {
     }
   }
 
-  /// Enforce capacity limits using the configured eviction policy
   Future<void> _enforceCapacityLimits() async {
     if (_policy.maxSize <= 0) return;
 
@@ -311,7 +297,6 @@ class CacheManager {
     }
   }
 
-  /// FIFO eviction - remove oldest entries first
   Future<void> _evictFifo() async {
     final keys = await _storage.getAllKeys();
     if (keys.isNotEmpty) {
@@ -320,19 +305,14 @@ class CacheManager {
     }
   }
 
-  /// LRU eviction - remove least recently used entries
   Future<void> _evictLru() async {
-    // For simplicity in in-memory storage, fall back to FIFO
     await _evictFifo();
   }
 
-  /// LFU eviction - remove least frequently used entries
   Future<void> _evictLfu() async {
-    // For simplicity in in-memory storage, fall back to FIFO
     await _evictFifo();
   }
 
-  /// Clean up expired entries
   Future<void> _cleanupExpiredEntries() async {
     if (_policy.maxAge == Duration.zero) return;
 
@@ -340,7 +320,6 @@ class CacheManager {
       final keys = await _storage.getAllKeys();
       for (final key in keys) {
         final data = await _storage.retrieve(key);
-        // retrieve() already handles expiration check and removal
         if (data == null) {
           _logger?.debug('Removed expired entry: $key');
         }

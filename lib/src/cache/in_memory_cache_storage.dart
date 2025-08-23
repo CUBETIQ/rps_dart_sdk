@@ -14,9 +14,7 @@ class InMemoryCacheStorage implements CacheStorage {
   final Duration _defaultMaxAge = Duration(hours: 1);
 
   @override
-  Future<void> initialize() async {
-    // No initialization needed for in-memory storage
-  }
+  Future<void> initialize() async {}
 
   @override
   Future<void> store(String key, Map<String, dynamic> data) async {
@@ -43,7 +41,6 @@ class InMemoryCacheStorage implements CacheStorage {
         return null;
       }
 
-      // Update access information
       final updatedEntry = entry.withAccess();
       final updatedJson = json.encode(updatedEntry.toJson());
       _storage[key] = updatedJson;
@@ -73,7 +70,6 @@ class InMemoryCacheStorage implements CacheStorage {
 
       return true;
     } catch (e) {
-      // If we can't parse the entry, consider it non-existent
       await remove(key);
       return false;
     }
@@ -118,7 +114,6 @@ class InMemoryCacheStorage implements CacheStorage {
           keysToRemove.add(key);
         }
       } catch (e) {
-        // Remove invalid entries
         keysToRemove.add(key);
       }
     }

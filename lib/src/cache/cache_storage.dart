@@ -6,50 +6,23 @@ library;
 
 /// Abstract interface for cache storage backends
 abstract class CacheStorage {
-  /// Store data in the cache with the given key
   Future<void> store(String key, Map<String, dynamic> data);
-
-  /// Retrieve data from the cache by key
-  /// Returns null if the key doesn't exist or data is expired
   Future<Map<String, dynamic>?> retrieve(String key);
-
-  /// Remove a specific entry from the cache
   Future<void> remove(String key);
-
-  /// Clear all entries from the cache
   Future<void> clear();
-
-  /// Get all keys currently stored in the cache
   Future<List<String>> getAllKeys();
-
-  /// Get the current size of the cache (number of entries)
   Future<int> size();
-
-  /// Check if a key exists in the cache
   Future<bool> containsKey(String key);
-
-  /// Initialize the storage backend
   Future<void> initialize();
-
-  /// Dispose of resources and cleanup
   Future<void> dispose();
 }
 
 /// Cache entry model that wraps stored data with metadata
 class CacheEntry {
-  /// The actual cached data
   final Map<String, dynamic> data;
-
-  /// When this entry was created
   final DateTime createdAt;
-
-  /// When this entry was last accessed
   final DateTime lastAccessedAt;
-
-  /// How many times this entry has been accessed
   final int accessCount;
-
-  /// Optional expiration time for this specific entry
   final DateTime? expiresAt;
 
   const CacheEntry({
@@ -87,12 +60,10 @@ class CacheEntry {
   bool isExpired(Duration maxAge) {
     final now = DateTime.now();
 
-    // Check specific expiration time first
     if (expiresAt != null && now.isAfter(expiresAt!)) {
       return true;
     }
 
-    // Check age-based expiration
     return now.difference(createdAt) > maxAge;
   }
 

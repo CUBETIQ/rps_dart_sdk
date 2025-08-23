@@ -8,28 +8,18 @@ library;
 /// Abstract interface for request validators that validate input data
 /// against configurable schemas and business rules
 abstract class RequestValidator {
-  /// Validates a request and returns detailed validation results
   ValidationResult validate(
     Map<String, dynamic> requestData,
     String requestType,
   );
-
-  /// Validator type identifier
   String get validatorType;
 }
 
 /// Result of request validation containing errors, warnings, and success status
 class ValidationResult {
-  /// Whether the validation passed without errors
   final bool isValid;
-
-  /// List of validation errors that prevent request processing
   final List<String> errors;
-
-  /// List of validation warnings that don't prevent processing
   final List<String> warnings;
-
-  /// Additional context information about the validation
   final Map<String, dynamic> context;
 
   const ValidationResult({
@@ -122,25 +112,12 @@ class ValidationException implements Exception {
 
 /// Schema definition for request validation
 class ValidationSchema {
-  /// Required fields that must be present
   final Set<String> requiredFields;
-
-  /// Field type definitions
   final Map<String, Type> fieldTypes;
-
-  /// Custom validation rules for specific fields
   final Map<String, List<ValidationRule>> fieldRules;
-
-  /// Global validation rules applied to the entire request
   final List<ValidationRule> globalRules;
-
-  /// Maximum allowed size for string fields
   final Map<String, int> maxLengths;
-
-  /// Minimum allowed size for string fields
   final Map<String, int> minLengths;
-
-  /// Pattern validation for string fields
   final Map<String, RegExp> patterns;
 
   const ValidationSchema({
@@ -225,23 +202,17 @@ class ValidationSchemaBuilder {
 
 /// Abstract validation rule interface
 abstract class ValidationRule {
-  /// Validates a value and returns error message if invalid
   String? validate(
     dynamic value,
     String fieldName,
     Map<String, dynamic> context,
   );
-
-  /// Rule description for debugging
   String get description;
 }
 
 /// Default implementation of RequestValidator with schema support
 class DefaultRequestValidator implements RequestValidator {
-  /// Validation schemas for different request types
   final Map<String, ValidationSchema> _schemas;
-
-  /// Default schema applied when no specific schema is found
   final ValidationSchema? _defaultSchema;
 
   @override
@@ -279,16 +250,14 @@ class DefaultRequestValidator implements RequestValidator {
       final fieldName = entry.key;
       final value = entry.value;
 
-      // Type validation
       final expectedType = schema.fieldTypes[fieldName];
       if (expectedType != null && !_isValidType(value, expectedType)) {
         errors.add(
           'Field "$fieldName" must be of type ${expectedType.toString()}',
         );
-        continue; // Skip further validation for this field
+        continue;
       }
 
-      // String length validation
       if (value is String) {
         final maxLength = schema.maxLengths[fieldName];
         if (maxLength != null && value.length > maxLength) {
@@ -311,7 +280,6 @@ class DefaultRequestValidator implements RequestValidator {
         }
       }
 
-      // Custom field rules
       final fieldRules = schema.fieldRules[fieldName];
       if (fieldRules != null) {
         for (final rule in fieldRules) {
@@ -323,7 +291,6 @@ class DefaultRequestValidator implements RequestValidator {
       }
     }
 
-    // Global validation rules
     for (final rule in schema.globalRules) {
       final error = rule.validate(requestData, 'request', requestData);
       if (error != null) {
@@ -350,7 +317,7 @@ class DefaultRequestValidator implements RequestValidator {
       case int:
         return value is int;
       case double:
-        return value is double || value is int; // Allow int for double
+        return value is double || value is int;
       case bool:
         return value is bool;
       case List:
@@ -363,7 +330,6 @@ class DefaultRequestValidator implements RequestValidator {
   }
 }
 
-/// Composite validator that runs multiple validators
 class CompositeRequestValidator implements RequestValidator {
   final List<RequestValidator> _validators;
 
@@ -388,7 +354,6 @@ class CompositeRequestValidator implements RequestValidator {
   }
 }
 
-/// Common validation rules
 class ValidationRules {
   /// Validates that a numeric value is within a range
   static ValidationRule range(num min, num max) {
@@ -424,7 +389,6 @@ class ValidationRules {
   }
 }
 
-/// Range validation rule implementation
 class _RangeValidationRule implements ValidationRule {
   final num min;
   final num max;
@@ -452,7 +416,6 @@ class _RangeValidationRule implements ValidationRule {
   }
 }
 
-/// Not empty validation rule implementation
 class _NotEmptyValidationRule implements ValidationRule {
   @override
   String get description => 'Value must not be empty';
@@ -479,7 +442,6 @@ class _NotEmptyValidationRule implements ValidationRule {
   }
 }
 
-/// One of validation rule implementation
 class _OneOfValidationRule implements ValidationRule {
   final List<dynamic> allowedValues;
 
@@ -502,7 +464,6 @@ class _OneOfValidationRule implements ValidationRule {
   }
 }
 
-/// Email validation rule implementation
 class _EmailValidationRule implements ValidationRule {
   static final _emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -529,7 +490,6 @@ class _EmailValidationRule implements ValidationRule {
   }
 }
 
-/// Custom validation rule implementation
 class _CustomValidationRule implements ValidationRule {
   final String? Function(
     dynamic value,

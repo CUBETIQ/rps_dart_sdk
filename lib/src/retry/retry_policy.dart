@@ -10,19 +10,10 @@ import '../core/error.dart';
 
 /// Abstract interface for retry policies that determine when and how to retry failed operations
 abstract class RetryPolicy {
-  /// Determines if an operation should be retried based on the attempt count and error
   bool shouldRetry(int attemptCount, RpsError error);
-
-  /// Calculates the delay before the next retry attempt
   Duration getDelay(int attemptCount, RpsError error);
-
-  /// Maximum number of retry attempts allowed
   int get maxAttempts;
-
-  /// Base delay for the first retry attempt
   Duration get baseDelay;
-
-  /// Maximum delay between retry attempts
   Duration get maxDelay;
 }
 
@@ -37,25 +28,16 @@ class ExponentialBackoffRetryPolicy implements RetryPolicy {
   @override
   final Duration baseDelay;
 
-  /// Multiplier for exponential backoff calculation
   final double multiplier;
 
   @override
   final Duration maxDelay;
 
-  /// Whether to add jitter to prevent thundering herd
   final bool jitterEnabled;
 
-  /// Random number generator for jitter calculation
   final math.Random _random;
 
   /// Creates an exponential backoff retry policy
-  ///
-  /// [maxAttempts] - Maximum number of retry attempts (default: 3)
-  /// [baseDelay] - Base delay for the first retry (default: 1 second)
-  /// [multiplier] - Exponential multiplier (default: 2.0)
-  /// [maxDelay] - Maximum delay between retries (default: 30 seconds)
-  /// [jitterEnabled] - Whether to add jitter (default: true)
   ExponentialBackoffRetryPolicy({
     this.maxAttempts = 3,
     this.baseDelay = const Duration(seconds: 1),
@@ -67,34 +49,28 @@ class ExponentialBackoffRetryPolicy implements RetryPolicy {
 
   @override
   bool shouldRetry(int attemptCount, RpsError error) {
-    // Don't retry if we've exceeded max attempts
     if (attemptCount >= maxAttempts) {
       return false;
     }
 
-    // Use intelligent retry decisions based on error type
     return _shouldRetryForErrorType(error);
   }
 
   @override
   Duration getDelay(int attemptCount, RpsError error) {
-    // Calculate exponential backoff: baseDelay * (multiplier ^ attemptCount)
     final exponentialDelayMs =
         (baseDelay.inMilliseconds * math.pow(multiplier, attemptCount)).round();
 
     var delay = Duration(milliseconds: exponentialDelayMs);
 
-    // Cap at maximum delay
     if (delay > maxDelay) {
       delay = maxDelay;
     }
 
-    // Add jitter if enabled
     if (jitterEnabled) {
       delay = _addJitter(delay);
     }
 
-    // Special handling for rate limiting - use longer delays
     if (error.type == RpsErrorType.rateLimited) {
       delay = _adjustForRateLimit(delay, error);
     }
@@ -123,7 +99,6 @@ class ExponentialBackoffRetryPolicy implements RetryPolicy {
 
   /// Adds jitter to the delay to prevent thundering herd
   Duration _addJitter(Duration delay) {
-    // Add up to 10% jitter
     final jitterMs = (_random.nextDouble() * delay.inMilliseconds * 0.1)
         .round();
     return Duration(milliseconds: delay.inMilliseconds + jitterMs);
@@ -131,17 +106,14 @@ class ExponentialBackoffRetryPolicy implements RetryPolicy {
 
   /// Adjusts delay for rate limiting scenarios
   Duration _adjustForRateLimit(Duration delay, RpsError error) {
-    // For rate limiting, use longer delays
     var adjustedDelay = Duration(
       milliseconds: (delay.inMilliseconds * 2).round(),
     );
 
-    // Check if the error contains retry-after header information
     if (error.details != null && error.details!.containsKey('retry_after')) {
       final retryAfter = error.details!['retry_after'];
       if (retryAfter is int) {
         final retryAfterDelay = Duration(seconds: retryAfter);
-        // Use the longer of the two delays
         if (retryAfterDelay > adjustedDelay) {
           adjustedDelay = retryAfterDelay;
         }
@@ -180,7 +152,6 @@ class ExponentialBackoffRetryPolicy implements RetryPolicy {
   }
 }
 
-/// No-retry policy that never retries operations
 class NoRetryPolicy implements RetryPolicy {
   @override
   final int maxAttempts = 0;
@@ -201,7 +172,6 @@ class NoRetryPolicy implements RetryPolicy {
   String toString() => 'NoRetryPolicy()';
 }
 
-/// Fixed delay retry policy that uses the same delay for all retry attempts
 class FixedDelayRetryPolicy implements RetryPolicy {
   @override
   final int maxAttempts;
@@ -212,10 +182,7 @@ class FixedDelayRetryPolicy implements RetryPolicy {
   @override
   Duration get maxDelay => baseDelay;
 
-  /// Whether to add jitter to prevent thundering herd
   final bool jitterEnabled;
-
-  /// Random number generator for jitter calculation
   final math.Random _random;
 
   /// Creates a fixed delay retry policy
@@ -232,7 +199,6 @@ class FixedDelayRetryPolicy implements RetryPolicy {
       return false;
     }
 
-    // Use the same retry logic as exponential backoff
     return _shouldRetryForErrorType(error);
   }
 
@@ -240,7 +206,6 @@ class FixedDelayRetryPolicy implements RetryPolicy {
   Duration getDelay(int attemptCount, RpsError error) {
     var delay = baseDelay;
 
-    // Add jitter if enabled
     if (jitterEnabled) {
       final jitterMs = (_random.nextDouble() * delay.inMilliseconds * 0.1)
           .round();
@@ -278,19 +243,13 @@ class FixedDelayRetryPolicy implements RetryPolicy {
   }
 }
 
-/// Retry manager that executes operations with retry logic
 class RetryManager {
-  /// The retry policy to use for operations
   final RetryPolicy policy;
 
   /// Creates a retry manager with the specified policy
   const RetryManager(this.policy);
 
   /// Executes an operation with retry logic
-  ///
-  /// [operation] - The operation to execute
-  /// [onRetry] - Optional callback called before each retry attempt
-  /// [requestId] - Optional request ID for error tracking
   Future<T> executeWithRetry<T>(
     Future<T> Function() operation, {
     void Function(int attemptCount, RpsError error, Duration delay)? onRetry,
@@ -300,7 +259,6 @@ class RetryManager {
 
     while (true) {
       try {
-        // Execute the operation
         return await operation();
       } catch (exception, stackTrace) {
         // Classify the error
@@ -313,7 +271,6 @@ class RetryManager {
               );
 
         if (!policy.shouldRetry(attemptCount, error)) {
-          // No more retries, throw the last error
           throw error;
         }
 

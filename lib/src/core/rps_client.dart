@@ -7,7 +7,6 @@ library;
 import 'dart:async';
 import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 
-/// Main SDK client that orchestrates all components
 class RpsClient {
   final RpsConfiguration _config;
   final HttpTransport _transport;
@@ -64,7 +63,6 @@ class RpsClient {
     try {
       _logger?.info('Initializing Modern RPS Client');
 
-      // Initialize cache manager if available
       if (_cacheManager != null) {
         await _cacheManager.initialize();
         _logger?.debug('Cache manager initialized');
@@ -82,7 +80,6 @@ class RpsClient {
         ),
       );
 
-      // Start processing any cached requests
       if (_cacheManager != null) {
         _processCachedRequestsAsync();
       }
@@ -128,7 +125,6 @@ class RpsClient {
     );
 
     try {
-      // 1. Validation
       final validationResult = await _validateRequest(request);
       if (!validationResult.isValid) {
         final error = RpsError.validation(
@@ -138,10 +134,8 @@ class RpsClient {
         throw error;
       }
 
-      // 2. Execute request with retry logic
       final response = await _executeWithRetry(request);
 
-      // 3. Cache successful response
       if (_cacheManager != null &&
           response.statusCode >= 200 &&
           response.statusCode < 300) {
@@ -163,7 +157,6 @@ class RpsClient {
     } catch (e) {
       _logger?.error('Request failed: ${request.id}', error: e);
 
-      // Cache failed request for offline retry if enabled
       if (_cacheManager != null && _config.cachePolicy.enableOfflineCache) {
         await _cacheManager.cacheRequest(request);
         _logger?.debug(
@@ -221,7 +214,6 @@ class RpsClient {
           break;
         }
 
-        // Calculate backoff delay
         final delay = retryPolicy.getDelay(attempt, error);
         _logger?.debug(
           'Retrying request ${request.id} in ${delay.inMilliseconds}ms',
@@ -232,7 +224,6 @@ class RpsClient {
       }
     }
 
-    // All retries exhausted - cache the request for offline retry if network error
     if (lastError != null &&
         _cacheManager != null &&
         (lastError.type == RpsErrorType.network ||
@@ -257,10 +248,8 @@ class RpsClient {
   }) {
     if (_cacheManager == null) return;
 
-    // Cancel any existing timer
     _cachedRequestsTimer?.cancel();
 
-    // Process cached requests with configurable interval
     _cachedRequestsTimer = Timer.periodic(interval, (timer) async {
       if (_disposed) {
         timer.cancel();
@@ -283,7 +272,6 @@ class RpsClient {
               _logger?.warning(
                 'Failed to process cached request: ${cachedRequest.id}',
               );
-              // Log and continue to next cached request
               _logger?.error(
                 'Failed to process cached request: ${cachedRequest.id}',
               );
@@ -373,7 +361,6 @@ class RpsClient {
     _logger?.info('Disposing Modern RPS Client');
 
     try {
-      // Cancel the cached requests processing timer
       _cachedRequestsTimer?.cancel();
 
       await _transport.dispose();

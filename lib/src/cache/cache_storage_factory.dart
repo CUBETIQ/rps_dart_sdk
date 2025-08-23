@@ -9,13 +9,7 @@ import 'in_memory_cache_storage.dart';
 import 'hive_cache_storage.dart';
 
 /// Enum for different cache storage types
-enum CacheStorageType {
-  /// In-memory cache storage (default, fast but not persistent)
-  inMemory,
-
-  /// Hive cache storage (persistent, high-performance, good for large data)
-  hive,
-}
+enum CacheStorageType { inMemory, hive }
 
 /// Factory class for creating cache storage instances
 class CacheStorageFactory {
@@ -49,7 +43,6 @@ class CacheStorageFactory {
     Duration defaultMaxAge,
     Map<String, dynamic>? config,
   ) async {
-    // Create Hive CE storage with configuration
     final storage = HiveCacheStorage(defaultMaxAge: defaultMaxAge);
     await storage.initialize();
     return storage;
@@ -65,7 +58,6 @@ class CacheStorageFactory {
       return CacheStorageType.inMemory;
     }
 
-    // For persistent storage, always use Hive since SharedPreferences is not available
     return CacheStorageType.hive;
   }
 

@@ -16,28 +16,13 @@ import '../cache/cache_storage_factory.dart';
 /// of the RPS SDK. Implementations must provide all required settings
 /// with validation and sensible defaults.
 abstract class RpsConfiguration {
-  /// Base URL for the RPS service
   String get baseUrl;
-
-  /// API key for authentication
   String get apiKey;
-
-  /// Connection timeout duration
   Duration get connectTimeout;
-
-  /// Response receive timeout duration
   Duration get receiveTimeout;
-
-  /// Retry policy for failed requests
   RetryPolicy get retryPolicy;
-
-  /// Cache policy for request caching
   CachePolicy get cachePolicy;
-
-  /// Custom headers to include with all requests
   Map<String, String> get customHeaders;
-
-  /// Validates the configuration and throws if invalid
   void validate();
 }
 
@@ -52,14 +37,11 @@ class RpsConfigurationBuilder {
   CachePolicy? _cachePolicy;
   final Map<String, String> _customHeaders = {};
 
-  // Cache storage configuration
   CacheStorageType? _cacheStorageType;
   Duration? _cacheMaxAge;
   Map<String, dynamic>? _cacheConfig;
 
   /// Sets the base URL for the RPS service
-  ///
-  /// Throws [RpsError] if the URL is empty or invalid
   RpsConfigurationBuilder setBaseUrl(String url) {
     if (url.isEmpty) {
       throw RpsError.configuration(
@@ -72,16 +54,12 @@ class RpsConfigurationBuilder {
   }
 
   /// Sets the API key for authentication
-  ///
-  /// The API key can be empty for configurations that don't require authentication
   RpsConfigurationBuilder setApiKey(String key) {
     _apiKey = key;
     return this;
   }
 
   /// Sets connection timeout duration
-  ///
-  /// Throws [RpsError] if timeout is negative or zero
   RpsConfigurationBuilder setConnectTimeout(Duration timeout) {
     if (timeout.isNegative || timeout == Duration.zero) {
       throw RpsError.configuration(
@@ -94,8 +72,6 @@ class RpsConfigurationBuilder {
   }
 
   /// Sets receive timeout duration
-  ///
-  /// Throws [RpsError] if timeout is negative or zero
   RpsConfigurationBuilder setReceiveTimeout(Duration timeout) {
     if (timeout.isNegative || timeout == Duration.zero) {
       throw RpsError.configuration(
@@ -108,9 +84,6 @@ class RpsConfigurationBuilder {
   }
 
   /// Sets connection and receive timeout durations
-  ///
-  /// Throws [RpsError] if either timeout is negative, zero, or if
-  /// connect timeout is greater than receive timeout
   RpsConfigurationBuilder setTimeouts(Duration connect, Duration receive) {
     if (connect.isNegative || connect == Duration.zero) {
       throw RpsError.configuration(
@@ -222,8 +195,6 @@ class RpsConfigurationBuilder {
   }
 
   /// Adds a custom header that will be included with all requests
-  ///
-  /// Throws [RpsError] if key is empty or contains invalid characters
   RpsConfigurationBuilder addCustomHeader(String key, String value) {
     if (key.isEmpty) {
       throw RpsError.configuration(
@@ -242,8 +213,6 @@ class RpsConfigurationBuilder {
   }
 
   /// Adds multiple custom headers at once
-  ///
-  /// Throws [RpsError] if any key is invalid
   RpsConfigurationBuilder addCustomHeaders(Map<String, String> headers) {
     for (final entry in headers.entries) {
       addCustomHeader(entry.key, entry.value);
@@ -297,8 +266,6 @@ class RpsConfigurationBuilder {
   Map<String, dynamic>? get cacheConfig => _cacheConfig;
 
   /// Builds and validates the configuration
-  ///
-  /// Throws [RpsConfigurationException] if validation fails
   RpsConfiguration build() {
     final config = _DefaultRpsConfiguration(
       baseUrl: _baseUrl ?? 'https://api.rps.com',

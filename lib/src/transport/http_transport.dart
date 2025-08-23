@@ -15,22 +15,11 @@ import '../auth/authentication_provider.dart';
 
 /// Abstract interface for HTTP transport operations
 abstract class HttpTransport {
-  /// Sends an HTTP request and returns the response
   Future<RpsResponse> sendRequest(RpsRequest request);
-
-  /// Cancels a request by its ID
   Future<void> cancelRequest(String requestId);
-
-  /// Cancels all pending requests
   Future<void> cancelAllRequests();
-
-  /// Disposes of the transport and cleans up resources
   Future<void> dispose();
-
-  /// Gets the number of active requests
   int get activeRequestCount;
-
-  /// Gets transport statistics
   HttpTransportStats get stats;
 }
 
@@ -106,7 +95,6 @@ class DioHttpTransport implements HttpTransport {
   }) async {
     final dio = customDio ?? Dio();
 
-    // Configure Dio with connection pooling and timeouts
     dio.options = BaseOptions(
       baseUrl: config.baseUrl,
       connectTimeout: config.connectTimeout,
@@ -117,13 +105,10 @@ class DioHttpTransport implements HttpTransport {
         'Accept': 'application/json',
         ...config.customHeaders,
       },
-      // Enable connection pooling
       persistentConnection: true,
-      // Set reasonable limits for concurrent connections
       extra: {'connectionPoolSize': 10, 'maxIdleConnections': 5},
     );
 
-    // Configure HTTP adapter for connection pooling
     if (dio.httpClientAdapter is IOHttpClientAdapter) {
       final adapter = dio.httpClientAdapter as IOHttpClientAdapter;
       adapter.createHttpClient = () {
@@ -142,7 +127,6 @@ class DioHttpTransport implements HttpTransport {
       logger: logger,
     );
 
-    // Add interceptors
     await transport._setupInterceptors();
 
     return transport;
@@ -150,7 +134,6 @@ class DioHttpTransport implements HttpTransport {
 
   /// Sets up request/response interceptors
   Future<void> _setupInterceptors() async {
-    // Authentication interceptor
     if (_authProvider != null) {
       _dio.interceptors.add(
         InterceptorsWrapper(
@@ -176,7 +159,6 @@ class DioHttpTransport implements HttpTransport {
       );
     }
 
-    // Logging interceptor
     if (_logger != null) {
       _dio.interceptors.add(
         InterceptorsWrapper(
@@ -251,7 +233,6 @@ class DioHttpTransport implements HttpTransport {
         );
       }
 
-      // Convert Dio exceptions to RPS errors
       final rpsError = _convertDioException(e, request.id);
       throw rpsError;
     } catch (e) {
@@ -320,7 +301,6 @@ class DioHttpTransport implements HttpTransport {
 
   /// Converts Dio exceptions to RPS errors
   RpsError _convertDioException(DioException e, String requestId) {
-    // Check if the DioException contains an RpsError from an interceptor
     if (e.error is RpsError) {
       return e.error as RpsError;
     }
@@ -396,7 +376,6 @@ class DioHttpTransport implements HttpTransport {
   Map<String, dynamic> _sanitizeHeaders(Map<String, dynamic> headers) {
     final sanitized = Map<String, dynamic>.from(headers);
 
-    // List of header names that should be sanitized
     const sensitiveHeaders = {
       'authorization',
       'x-api-key',

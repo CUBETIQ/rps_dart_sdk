@@ -5,16 +5,7 @@
 library;
 
 /// Eviction policies for cache management when capacity limits are reached
-enum EvictionPolicy {
-  /// First In, First Out - removes oldest entries first
-  fifo,
-
-  /// Least Recently Used - removes least recently accessed entries
-  lru,
-
-  /// Least Frequently Used - removes least frequently accessed entries
-  lfu,
-}
+enum EvictionPolicy { fifo, lru, lfu }
 
 /// Cache policy configuration that controls all aspects of caching behavior
 class CachePolicy {

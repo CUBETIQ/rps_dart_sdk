@@ -24,7 +24,6 @@ class HiveCacheStorage implements CacheStorage {
     if (_initialized) return;
 
     try {
-      // Initialize Hive with current directory as path
       Hive.init('.');
 
       if (!Hive.isBoxOpen(_boxName)) {
@@ -63,13 +62,11 @@ class HiveCacheStorage implements CacheStorage {
       final entryData = json.decode(entryJson) as Map<String, dynamic>;
       final entry = CacheEntry.fromJson(entryData);
 
-      // Check if entry is expired
       if (entry.isExpired(_defaultMaxAge)) {
         await remove(key);
         return null;
       }
 
-      // Update access information
       final updatedEntry = entry.withAccess();
       final updatedJson = json.encode(updatedEntry.toJson());
       await _box!.put(key, updatedJson);
@@ -177,7 +174,6 @@ class HiveCacheStorage implements CacheStorage {
               expiredCount++;
             }
           } catch (e) {
-            // Skip invalid entries
             expiredCount++;
           }
         }
@@ -214,7 +210,6 @@ class HiveCacheStorage implements CacheStorage {
               removedCount++;
             }
           } catch (e) {
-            // Remove invalid entries too
             await _box!.delete(key);
             removedCount++;
           }

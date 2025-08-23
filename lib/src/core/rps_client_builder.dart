@@ -11,15 +11,11 @@ import 'package:rps_dart_sdk/src/core/core.dart';
 
 import '../auth/authentication_provider.dart';
 import '../cache/cache_manager.dart';
-import '../cache/cache_policy.dart';
 import '../cache/cache_storage_factory.dart';
 import '../cache/in_memory_cache_storage.dart';
 import '../transport/http_transport.dart';
-import '../retry/retry_policy.dart';
-
 import 'rps_client.dart';
 
-/// Builder class for creating RpsClient instances with fluent API
 class RpsClientBuilder {
   RpsConfiguration? _configuration;
   HttpTransport? _transport;
@@ -65,113 +61,13 @@ class RpsClientBuilder {
     return this;
   }
 
-  /// Set the authentication provider for the client
-  RpsClientBuilder withAuthProvider(AuthenticationProvider authProvider) {
-    _authProvider = authProvider;
-    return this;
-  }
-
-  /// Factory method for basic configuration
-  static Future<RpsClient> basic({
-    required String baseUrl,
-    required String apiKey,
-    Duration connectTimeout = const Duration(seconds: 30),
-    Duration receiveTimeout = const Duration(seconds: 30),
-  }) async {
-    final builder = RpsClientBuilder();
-
-    // Create basic configuration
-    final config = RpsConfigurationBuilder()
-        .setBaseUrl(baseUrl)
-        .setApiKey(apiKey)
-        .setConnectTimeout(connectTimeout)
-        .setReceiveTimeout(receiveTimeout)
-        .build();
-
-    builder.withConfiguration(config);
-
-    return await builder.build();
-  }
-
-  /// Factory method for offline-first configuration
-  static Future<RpsClient> offlineFirst({
-    required String baseUrl,
-    required String apiKey,
-    Duration connectTimeout = const Duration(seconds: 30),
-    Duration receiveTimeout = const Duration(seconds: 30),
-    Duration maxCacheAge = const Duration(hours: 24),
-    int maxCacheSize = 1000,
-  }) async {
-    final builder = RpsClientBuilder();
-
-    // Create offline-first configuration
-    final config = RpsConfigurationBuilder()
-        .setBaseUrl(baseUrl)
-        .setApiKey(apiKey)
-        .setConnectTimeout(connectTimeout)
-        .setReceiveTimeout(receiveTimeout)
-        .setCachePolicy(CachePolicy.offlineFirst())
-        .build();
-
-    builder.withConfiguration(config);
-
-    return await builder.build();
-  }
-
-  /// Factory method for enterprise configuration with enhanced features
-  static Future<RpsClient> enterprise({
-    required String baseUrl,
-    required String apiKey,
-    AuthenticationProvider? authProvider,
-    Duration connectTimeout = const Duration(seconds: 30),
-    Duration receiveTimeout = const Duration(seconds: 30),
-    bool enableMetrics = true,
-    bool enableEvents = true,
-    RpsLogLevel logLevel = RpsLogLevel.info,
-  }) async {
-    final builder = RpsClientBuilder();
-
-    // Create enterprise configuration
-    final config = RpsConfigurationBuilder()
-        .setBaseUrl(baseUrl)
-        .setApiKey(apiKey)
-        .setConnectTimeout(connectTimeout)
-        .setReceiveTimeout(receiveTimeout)
-        .setRetryPolicy(
-          ExponentialBackoffRetryPolicy(
-            maxAttempts: 5,
-            baseDelay: const Duration(seconds: 2),
-          ),
-        )
-        .setCachePolicy(CachePolicy.disabled())
-        .build();
-
-    builder.withConfiguration(config);
-
-    // Add enterprise features
-    if (authProvider != null) {
-      builder.withAuthProvider(authProvider);
-    }
-
-    if (enableEvents) {
-      builder.withEventBus(RpsEventBus());
-    }
-
-    builder.withLogger(SimpleLoggingManager());
-
-    return await builder.build();
-  }
-
-  /// Build the RpsClient with all configured components
   Future<RpsClient> build() async {
-    // Validate required components
     if (_configuration == null) {
       throw RpsError.configuration(message: 'Configuration is required');
     }
 
     _configuration!.validate();
 
-    // Create default components if not provided
     if (_transport == null) {
       _transport = await DioHttpTransport.create(
         config: _configuration!,
@@ -194,7 +90,6 @@ class RpsClientBuilder {
       );
     }
 
-    // Create the client
     final client = RpsClient.create(
       config: _configuration!,
       transport: _transport!,

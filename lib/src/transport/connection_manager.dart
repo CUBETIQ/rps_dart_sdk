@@ -15,22 +15,11 @@ import '../core/simple_logger.dart';
 
 /// Configuration for connection management
 class ConnectionConfig {
-  /// Maximum number of connections per host
   final int maxConnectionsPerHost;
-
-  /// Maximum number of idle connections to keep alive
   final int maxIdleConnections;
-
-  /// Timeout for idle connections
   final Duration idleTimeout;
-
-  /// Connection timeout
   final Duration connectionTimeout;
-
-  /// Maximum number of concurrent requests
   final int maxConcurrentRequests;
-
-  /// Request queue timeout
   final Duration queueTimeout;
 
   const ConnectionConfig({
@@ -189,12 +178,10 @@ class ConnectionManager {
         options.extra['requestId'] as String? ?? _generateRequestId();
     options.extra['requestId'] = requestId;
 
-    // Check if we can execute immediately
     if (_activeRequests.length < _config.maxConcurrentRequests) {
       return _executeRequestDirectly(requestId, options);
     }
 
-    // Queue the request
     return _queueRequest(requestId, options);
   }
 
@@ -209,14 +196,13 @@ class ConnectionManager {
     try {
       _logger?.debug('Executing request directly: $requestId');
 
-      // Set up request timeout
       _setupRequestTimeout(requestId, options);
 
       final response = await _dio.fetch(options);
 
       final connectionTime = DateTime.now().difference(startTime);
       _connectionTimes.add(connectionTime);
-      _totalConnectionsReused++; // Assume reuse for successful connections
+      _totalConnectionsReused++;
 
       _logger?.debug(
         'Request completed: $requestId - Status: ${response.statusCode}, Time: ${connectionTime.inMilliseconds}ms',
@@ -254,7 +240,6 @@ class ConnectionManager {
       'Queued request: $requestId - Queue size: ${_requestQueue.length}, Active: ${_activeRequests.length}',
     );
 
-    // Set up queue timeout
     Timer(_config.queueTimeout, () {
       if (!completer.isCompleted) {
         _requestQueue.remove(queuedRequest);
@@ -268,7 +253,6 @@ class ConnectionManager {
       }
     });
 
-    // Handle cancellation
     if (cancelToken != null) {
       cancelToken.whenCancel.then((_) {
         if (!completer.isCompleted) {
@@ -293,7 +277,6 @@ class ConnectionManager {
         _activeRequests.length < _config.maxConcurrentRequests) {
       final queuedRequest = _requestQueue.removeFirst();
 
-      // Skip expired or cancelled requests
       if (queuedRequest.isExpired || queuedRequest.isCancelled) {
         if (!queuedRequest.completer.isCompleted) {
           final error = queuedRequest.isExpired
@@ -313,7 +296,6 @@ class ConnectionManager {
         continue;
       }
 
-      // Execute the queued request
       _executeRequestDirectly(queuedRequest.id, queuedRequest.options)
           .then((response) {
             if (!queuedRequest.completer.isCompleted) {
@@ -333,11 +315,9 @@ class ConnectionManager {
     final timeout = options.receiveTimeout ?? _config.connectionTimeout;
 
     _requestTimeouts[requestId] = Timer(timeout, () {
-      _logger?.warning('Request timeout: $requestId');
       _totalConnectionsTimedOut++;
 
       // The actual timeout handling is done by Dio
-      // This is just for statistics and logging
     });
   }
 
@@ -385,11 +365,9 @@ class ConnectionManager {
 
   /// Cancels a specific request
   Future<void> cancelRequest(String requestId) async {
-    // Remove from active requests
     _activeRequests.remove(requestId);
     _requestTimeouts.remove(requestId)?.cancel();
 
-    // Remove from queue
     final queuedRequest = _requestQueue.cast<QueuedRequest?>().firstWhere(
       (r) => r?.id == requestId,
       orElse: () => null,
@@ -414,13 +392,11 @@ class ConnectionManager {
 
   /// Cancels all pending requests
   Future<void> cancelAllRequests() async {
-    // Cancel active requests
     final activeRequestIds = List<String>.from(_activeRequests);
     for (final requestId in activeRequestIds) {
       await cancelRequest(requestId);
     }
 
-    // Cancel queued requests
     final queuedRequests = List<QueuedRequest>.from(_requestQueue);
     _requestQueue.clear();
 
@@ -455,7 +431,7 @@ class ConnectionManager {
 
     return ConnectionStats(
       activeConnections: _activeRequests.length,
-      idleConnections: 0, // This would require deeper Dio integration to track
+      idleConnections: 0,
       queuedRequests: _requestQueue.length,
       totalConnectionsCreated: _totalConnectionsCreated,
       totalConnectionsReused: _totalConnectionsReused,
@@ -469,7 +445,6 @@ class ConnectionManager {
     _cleanupTimer?.cancel();
     await cancelAllRequests();
 
-    // Clear all timeouts
     for (final timer in _requestTimeouts.values) {
       timer.cancel();
     }
