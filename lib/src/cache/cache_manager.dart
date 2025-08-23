@@ -69,7 +69,7 @@ class CacheManager {
     }
   }
 
-  /// Get all cached requests for retry
+  /// Get all cached requests for retry (sorted from oldest to newest)
   Future<List<CachedRequest>> getCachedRequests() async {
     await _ensureInitialized();
 
@@ -92,6 +92,12 @@ class CacheManager {
         }
       }
 
+      // Sort cached requests from oldest to newest (FIFO processing)
+      cachedRequests.sort((a, b) => a.cachedAt.compareTo(b.cachedAt));
+
+      _logger?.debug(
+        'Retrieved ${cachedRequests.length} cached requests (sorted oldest to newest)',
+      );
       return cachedRequests;
     } catch (e) {
       _logger?.error('Failed to get cached requests', error: e);
