@@ -185,6 +185,34 @@ Future<CacheStorage> createCacheWithCustomProvider() async {
 }
 ```
 
+## Specifying Custom Paths for Hive Cache Storage
+
+You can also specify custom paths directly when configuring Hive cache storage:
+
+```dart
+// Using RpsConfigurationBuilder with custom path
+final config = RpsConfigurationBuilder()
+    .setBaseUrl('https://api.example.com/webhook')
+    .setApiKey('your-api-key')
+    .useHiveCacheWithPath(
+      path: '/path/to/your/cache/directory',  // Custom path for Hive storage
+      maxAge: const Duration(days: 30),
+      boxName: 'my_ios_cache_box',
+      autoCompact: true,
+    )
+    .build();
+
+// Or directly using CacheStorageFactory
+final storage = await CacheStorageFactory.create(
+  type: CacheStorageType.hive,
+  config: {
+    'path': '/path/to/your/cache/directory',  // Custom path
+    'boxName': 'my_ios_cache_box',
+    'maxAge': const Duration(days: 30),
+  },
+);
+```
+
 ## iOS-Specific Recommendations
 
 ### Cache Directory Best Practices

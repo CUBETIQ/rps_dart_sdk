@@ -392,9 +392,63 @@ final config2 = RpsConfigurationBuilder()
     // Choose one:
     .useInMemoryCache(maxAge: const Duration(hours: 1))
     // .useHiveCache(maxAge: const Duration(days: 30), boxName: 'cache')
+    // .useHiveCacheWithPath(path: '/custom/cache/path', maxAge: const Duration(days: 30), boxName: 'cache')
     // .autoSelectCacheStorage(needsPersistence: true, isHighFrequency: false)
     .build();
-````
+```
+
+### 📍 Custom Cache Path Configuration
+
+For advanced use cases where you need to specify a custom path for Hive cache storage:
+
+```dart
+// Using RpsConfigurationBuilder with custom path
+final config = RpsConfigurationBuilder()
+    .setBaseUrl('https://api.example.com/webhook')
+    .setApiKey('your-api-key')
+    .useHiveCacheWithPath(
+      path: '/path/to/your/cache/directory',  // Custom path for Hive storage
+      maxAge: const Duration(days: 30),
+      boxName: 'my_custom_cache_box',
+      autoCompact: true,
+    )
+    .build();
+
+// Or directly using CacheStorageFactory
+final storage = await CacheStorageFactory.create(
+  type: CacheStorageType.hive,
+  config: {
+    'path': '/path/to/your/cache/directory',  // Custom path
+    'boxName': 'my_custom_cache_box',
+    'maxAge': const Duration(days: 30),
+  },
+);
+
+// For Android apps with proper directory handling using path_provider:
+// Add to pubspec.yaml: path_provider: ^2.1.1
+import 'package:path_provider/path_provider.dart';
+
+Future<CacheStorage> createAndroidCacheWithCustomPath() async {
+  try {
+    final cacheDirs = await getExternalCacheDirectories();
+    final cachePath = '${cacheDirs.first.path}/my_app_cache';
+
+    return await CacheStorageFactory.create(
+      type: CacheStorageType.hive,
+      config: {
+        'path': cachePath,
+        'boxName': 'my_app_cache_box',
+      },
+    );
+  } catch (e) {
+    // Fallback to auto-detection
+    return await CacheStorageFactory.create(
+      type: CacheStorageType.hive,
+      config: {'boxName': 'fallback_cache_box'},
+    );
+  }
+}
+```
 
 ## Advanced Features
 
@@ -734,6 +788,7 @@ Check out comprehensive examples in the `/example` directory:
 - **`example/enhanced_cache_usage.dart`** - Multi-storage cache examples
 - **`example/comprehensive_example.dart`** - Complete feature demonstration
 - **`example/validation_example.dart`** - Request validation examples
+- **`example/custom_path_example.dart`** - Custom path configuration for cache storage
 
 ### 🧪 Testing Your Implementation
 
@@ -769,7 +824,7 @@ late RpsClient client;
 });
 }
 
-````
+```
 
 ## ⚡ Performance Tips
 
@@ -794,7 +849,7 @@ final highPerfClient = await RpsClientBuilder.createHighPerformance(
   webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
-````
+```
 
 ### 🔧 Optimization Settings
 
@@ -959,3 +1014,4 @@ RpsClientBuilder.forWebhook(url, apiKey, needsPersistence, isHighFrequency, isLa
 - `.autoSelectCacheStorage(needsPersistence, isHighFrequency, isLargeData)` - Auto-select
 
 Happy coding! 🎉
+````
