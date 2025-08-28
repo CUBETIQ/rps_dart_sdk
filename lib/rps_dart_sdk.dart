@@ -11,6 +11,8 @@ export 'src/core/models.dart';
 export 'src/core/error.dart';
 export 'src/core/simple_logger.dart';
 export 'src/core/events.dart';
+export 'src/core/android_utils.dart';
+export 'src/core/ios_utils.dart';
 export 'src/auth/authentication_provider.dart';
 export 'src/cache/cache.dart';
 export 'src/cache/cache_storage_factory.dart';

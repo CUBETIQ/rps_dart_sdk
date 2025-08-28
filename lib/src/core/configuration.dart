@@ -174,6 +174,23 @@ class RpsConfigurationBuilder {
     return this;
   }
 
+  /// Configure cache for Hive CE storage with custom path (useful for Android)
+  RpsConfigurationBuilder useHiveCacheWithPath({
+    Duration maxAge = const Duration(days: 7),
+    String? path,
+    String? boxName,
+    bool autoCompact = true,
+  }) {
+    _cacheStorageType = CacheStorageType.hive;
+    _cacheMaxAge = maxAge;
+    _cacheConfig = {
+      'path': path,
+      'boxName': boxName ?? 'rps_cache',
+      'autoCompact': autoCompact,
+    };
+    return this;
+  }
+
   /// Auto-select cache storage based on use case
   RpsConfigurationBuilder autoSelectCacheStorage({
     required bool needsPersistence,

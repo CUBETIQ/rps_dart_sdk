@@ -15,26 +15,89 @@ class HiveCacheStorage implements CacheStorage {
   Box<String>? _box;
   bool _initialized = false;
   final Duration _defaultMaxAge;
+  final String? _customPath;
+  final String? _customBoxName;
 
-  HiveCacheStorage({Duration defaultMaxAge = const Duration(hours: 24)})
-    : _defaultMaxAge = defaultMaxAge;
+  HiveCacheStorage({
+    Duration defaultMaxAge = const Duration(hours: 24),
+    String? path,
+    String? boxName,
+  }) : _defaultMaxAge = defaultMaxAge,
+       _customPath = path,
+       _customBoxName = boxName;
 
   @override
   Future<void> initialize() async {
     if (_initialized) return;
 
     try {
-      Hive.init('.');
-
-      if (!Hive.isBoxOpen(_boxName)) {
-        _box = await Hive.openBox<String>(_boxName);
-      } else {
-        _box = Hive.box<String>(_boxName);
-      }
+      await _initializeHive();
       _initialized = true;
     } catch (e) {
       throw CacheStorageException('Failed to initialize Hive cache storage', e);
     }
+  }
+
+  /// Initialize Hive with fallback path handling for Android
+  Future<void> _initializeHive() async {
+    String? initPath = _customPath;
+    final boxName = _customBoxName ?? _boxName;
+
+    // If no custom path provided, try different locations
+    if (initPath == null) {
+      final fallbackPaths = _getFallbackPaths();
+
+      for (final path in fallbackPaths) {
+        try {
+          Hive.init(path);
+
+          if (!Hive.isBoxOpen(boxName)) {
+            _box = await Hive.openBox<String>(boxName);
+          } else {
+            _box = Hive.box<String>(boxName);
+          }
+          return; // Success!
+        } catch (e) {
+          // Try next path
+          continue;
+        }
+      }
+
+      // If all paths failed, throw the last error
+      throw CacheStorageException(
+        'All Hive initialization paths failed. Consider using in-memory cache for Android apps.',
+        null,
+      );
+    } else {
+      // Use custom path
+      Hive.init(initPath);
+
+      if (!Hive.isBoxOpen(boxName)) {
+        _box = await Hive.openBox<String>(boxName);
+      } else {
+        _box = Hive.box<String>(boxName);
+      }
+    }
+  }
+
+  /// Get fallback paths for different platforms
+  List<String> _getFallbackPaths() {
+    final paths = <String>[];
+
+    // Try current directory first (works on desktop)
+    paths.add('.');
+
+    // Try system temp directory
+    try {
+      // For mobile platforms, try common writable directories
+      paths.add('/tmp');
+      paths.add('./cache');
+      paths.add('./data');
+    } catch (e) {
+      // Ignore path errors
+    }
+
+    return paths;
   }
 
   @override

@@ -17,6 +17,10 @@ dependencies:
   equatable: ^2.0.7
   logger: ^2.6.1
 
+  # Optional dependencies for platform-specific utilities
+  # Uncomment the following if you need proper platform directory support:
+  # path_provider: ^2.1.1
+
 dev_dependencies:
   test: ^1.25.8
   lints: ^5.0.0

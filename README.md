@@ -145,6 +145,189 @@ final client = await RpsClientBuilder.forWebhook(
 );
 ```
 
+## Platform-Specific Utilities
+
+The RPS Dart SDK provides platform-specific utilities to help optimize performance and handle platform-specific challenges:
+
+### 🤖 Android Utilities
+
+For Android devices with their unique file system restrictions:
+
+```dart
+import 'package:rps_dart_sdk/rps_dart_sdk.dart';
+
+// Create Android-compatible cache storage
+final cache = await AndroidUtils.createAndroidCompatibleCache(
+  cachePath: '/data/user/0/com.yourapp/cache',
+  maxAge: const Duration(days: 7),
+  verbose: true,
+);
+
+// Diagnose Android cache issues
+final diagnosis = await AndroidUtils.diagnoseCacheIssues(
+  attemptedPath: '/invalid/path',
+);
+
+print('Android recommendations: ${diagnosis['recommendations']}');
+```
+
+**Best Practice**: Use `path_provider` package for proper Android directories:
+
+``dart
+// Add to pubspec.yaml
+// dependencies:
+// path_provider: ^2.1.1
+// rps_dart_sdk:
+// git:
+// url: https://code.cubetiqs.com/cubetiq/rps_dart_sdk.git
+// ref: main
+
+import 'package:path_provider/path_provider.dart';
+import 'package:rps_dart_sdk/rps_dart_sdk.dart';
+
+// Get proper Android cache directory
+Future<CacheStorage> createAndroidCache() async {
+try {
+final cacheDirs = await getExternalCacheDirectories();
+final cachePath = '${cacheDirs.first.path}/rps_cache';
+
+    return await AndroidUtils.createAndroidCompatibleCache(
+      cachePath: cachePath,
+      boxName: 'rps_android_cache',
+    );
+
+} catch (e) {
+// Fallback to auto-detection
+return await AndroidUtils.createAndroidCompatibleCache(
+boxName: 'rps_android_cache',
+);
+}
+}
+
+// Example with proper error handling
+Future<String?> getAndroidCachePath() async {
+try {
+final cacheDirs = await getExternalCacheDirectories();
+return '${cacheDirs.first.path}/rps_cache';
+} catch (e) {
+// Fallback to Android utilities
+return await AndroidUtils.getBestCachePath();
+}
+}
+
+// Using custom path provider function
+Future<CacheStorage> createAndroidCacheWithCustomProvider() async {
+// Custom path provider function
+Future<String> myCustomPathProvider() async {
+// Your custom logic here
+return '/my/custom/android/path';
+}
+
+final cachePath = await AndroidUtils.createAndroidCachePathWithProvider(
+pathProvider: myCustomPathProvider,
+subdirectory: 'my_app_cache',
+);
+
+return await AndroidUtils.createAndroidCompatibleCache(
+cachePath: cachePath ?? await AndroidUtils.getBestCachePath(),
+boxName: 'my_app_cache',
+);
+}
+
+````
+
+### 📱 iOS Utilities
+
+For iPhone and iPad devices with their specific directory structures and capabilities:
+
+```dart
+import 'package:rps_dart_sdk/rps_dart_sdk.dart';
+
+// Create iOS-optimized cache storage
+final cache = await IOSUtils.createIOSOptimizedCache(
+  cachePath: './Library/Caches/my_app_cache',
+  boxName: 'my_ios_box',
+  maxAge: const Duration(days: 7),
+  verbose: true,
+);
+
+// Detect iOS device type
+final deviceType = IOSUtils.detectIOSDevice();
+
+// Get iOS-optimized configuration
+final config = IOSUtils.getIOSOptimizedCacheConfig(
+  deviceType: deviceType,
+);
+
+// Diagnose iOS cache issues
+final diagnosis = await IOSUtils.diagnoseIOSCacheIssues();
+````
+
+**Best Practice**: Use `path_provider` package for proper iOS directories:
+
+``dart
+// Add to pubspec.yaml
+// dependencies:
+// path_provider: ^2.1.1
+// rps_dart_sdk:
+// git:
+// url: https://code.cubetiqs.com/cubetiq/rps_dart_sdk.git
+// ref: main
+
+import 'package:path_provider/path_provider.dart';
+import 'package:rps_dart_sdk/rps_dart_sdk.dart';
+
+// Get proper iOS directories
+Future<CacheStorage> createIOSCache() async {
+try {
+final supportDir = await getApplicationSupportDirectory();
+final cachePath = '${supportDir.path}/rps_cache';
+
+    return await IOSUtils.createIOSOptimizedCache(
+      cachePath: cachePath,
+      boxName: 'rps_ios_cache',
+    );
+
+} catch (e) {
+// Fallback to auto-detection
+return await IOSUtils.createIOSOptimizedCache(
+boxName: 'rps_ios_cache',
+);
+}
+}
+
+// Example with proper error handling
+Future<String?> getIOSCachePath() async {
+try {
+final supportDir = await getApplicationSupportDirectory();
+return '${supportDir.path}/rps_cache';
+} catch (e) {
+// Fallback to iOS utilities
+return await IOSUtils.getBestIOSCachePath();
+}
+}
+
+// Using custom path provider function
+Future<CacheStorage> createIOSCacheWithCustomProvider() async {
+// Custom path provider function
+Future<String> myCustomPathProvider() async {
+// Your custom logic here
+return '/my/custom/ios/path';
+}
+
+final cachePath = await IOSUtils.createIOSCachePathWithProvider(
+pathProvider: myCustomPathProvider,
+subdirectory: 'my_app_cache',
+);
+
+return await IOSUtils.createIOSOptimizedCache(
+cachePath: cachePath ?? await IOSUtils.getBestIOSCachePath(),
+boxName: 'my_app_cache',
+);
+}
+
+````
+
 ## Cache Storage Guide
 
 ### 📊 Storage Comparison
@@ -211,7 +394,7 @@ final config2 = RpsConfigurationBuilder()
     // .useHiveCache(maxAge: const Duration(days: 30), boxName: 'cache')
     // .autoSelectCacheStorage(needsPersistence: true, isHighFrequency: false)
     .build();
-```
+````
 
 ## Advanced Features
 
@@ -554,13 +737,13 @@ Check out comprehensive examples in the `/example` directory:
 
 ### 🧪 Testing Your Implementation
 
-```dart
+``dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rps_dart_sdk/rps_dart_sdk.dart';
 
 void main() {
-  group('RPS Client Tests', () {
-    late RpsClient client;
+group('RPS Client Tests', () {
+late RpsClient client;
 
     setUp(() async {
       // Use in-memory cache for testing
@@ -582,9 +765,11 @@ void main() {
 
       expect(response.statusCode, equals(200));
     });
-  });
+
+});
 }
-```
+
+````
 
 ## ⚡ Performance Tips
 
@@ -609,7 +794,7 @@ final highPerfClient = await RpsClientBuilder.createHighPerformance(
   webhookUrl: 'https://api.example.com/webhook',
   apiKey: 'your-api-key',
 );
-```
+````
 
 ### 🔧 Optimization Settings
 

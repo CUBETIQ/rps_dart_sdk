@@ -43,7 +43,14 @@ class CacheStorageFactory {
     Duration defaultMaxAge,
     Map<String, dynamic>? config,
   ) async {
-    final storage = HiveCacheStorage(defaultMaxAge: defaultMaxAge);
+    final path = config?['path'] as String?;
+    final boxName = config?['boxName'] as String?;
+
+    final storage = HiveCacheStorage(
+      defaultMaxAge: defaultMaxAge,
+      path: path,
+      boxName: boxName,
+    );
     await storage.initialize();
     return storage;
   }

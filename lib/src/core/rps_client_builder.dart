@@ -11,6 +11,7 @@ import 'package:rps_dart_sdk/src/core/core.dart';
 
 import '../auth/authentication_provider.dart';
 import '../cache/cache_manager.dart';
+import '../cache/cache_storage.dart';
 import '../cache/cache_storage_factory.dart';
 import '../cache/in_memory_cache_storage.dart';
 import '../transport/http_transport.dart';
@@ -217,6 +218,54 @@ class RpsClientBuilder {
       type: storageType,
       config: cacheMaxAge != null ? {'maxAge': cacheMaxAge} : null,
     );
+    final cacheManager = CacheManager(
+      storage: storage,
+      policy: config.cachePolicy,
+    );
+    await cacheManager.initialize();
+
+    return RpsClientBuilder()
+        .withConfiguration(config)
+        .withCacheManager(cacheManager)
+        .withLogger(SimpleLoggingManager(level: RpsLogLevel.debug))
+        .build();
+  }
+
+  /// Create an Android-compatible offline-first client with automatic fallback
+  static Future<RpsClient> createAndroidOfflineFirst({
+    required String webhookUrl,
+    required String apiKey,
+    String? cachePath,
+    Duration? cacheMaxAge,
+  }) async {
+    final config = RpsConfigurationBuilder()
+        .setBaseUrl(webhookUrl)
+        .setApiKey(apiKey)
+        .offlineFirst()
+        .build();
+
+    CacheStorage? storage;
+
+    try {
+      // Try to create Hive storage with custom path or fallback paths
+      storage = await CacheStorageFactory.create(
+        type: CacheStorageType.hive,
+        config: {
+          if (cachePath != null) 'path': cachePath,
+          if (cacheMaxAge != null) 'maxAge': cacheMaxAge,
+        },
+      );
+    } catch (e) {
+      // If Hive fails (likely due to read-only filesystem), fall back to in-memory
+      print(
+        'Warning: Hive cache initialization failed, falling back to in-memory cache. Error: $e',
+      );
+      storage = await CacheStorageFactory.create(
+        type: CacheStorageType.inMemory,
+        config: cacheMaxAge != null ? {'maxAge': cacheMaxAge} : null,
+      );
+    }
+
     final cacheManager = CacheManager(
       storage: storage,
       policy: config.cachePolicy,
