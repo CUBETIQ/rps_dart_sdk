@@ -206,6 +206,7 @@ class RpsClientBuilder {
     required String apiKey,
     CacheStorageType storageType = CacheStorageType.hive,
     Duration? cacheMaxAge,
+    String? cachePath,
   }) async {
     final config = RpsConfigurationBuilder()
         .setBaseUrl(webhookUrl)
@@ -216,7 +217,10 @@ class RpsClientBuilder {
     // Create cache manager with selected storage type
     final storage = await CacheStorageFactory.create(
       type: storageType,
-      config: cacheMaxAge != null ? {'maxAge': cacheMaxAge} : null,
+      config: {
+        if (cachePath != null) 'path': cachePath,
+        if (cacheMaxAge != null) 'maxAge': cacheMaxAge,
+      },
     );
     final cacheManager = CacheManager(
       storage: storage,

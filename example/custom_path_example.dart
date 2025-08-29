@@ -72,9 +72,25 @@ void main() async {
     print('Error creating iOS cache with custom path: $e');
   }
 
-  // Example 5: Using custom path provider functions
-  print('\n=== Example 5: Custom path provider functions ===');
-  
+  // Example 5: Using createOfflineFirst with custom path
+  print('\n=== Example 5: createOfflineFirst with custom path ===');
+  try {
+    final offlineClient = await RpsClientBuilder.createOfflineFirst(
+      webhookUrl: 'https://api.example.com/webhook',
+      apiKey: 'your-api-key',
+      cachePath: './offline_custom_cache', // Custom path for offline cache
+      cacheMaxAge: const Duration(days: 30),
+    );
+
+    print('Offline-first client created with custom cache path');
+    await offlineClient.dispose();
+  } catch (e) {
+    print('Error creating offline-first client with custom path: $e');
+  }
+
+  // Example 6: Using custom path provider functions
+  print('\n=== Example 6: Custom path provider functions ===');
+
   // Custom path provider function
   Future<String> myCustomPathProvider() async {
     // Your custom logic here

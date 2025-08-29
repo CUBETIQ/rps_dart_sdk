@@ -114,6 +114,18 @@ final client = await RpsClientBuilder.createOfflineFirst(
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive, // persistent storage required
   cacheMaxAge: const Duration(days: 30),
+  cachePath: '/path/to/your/cache/directory', // Optional: custom cache path
+);
+
+// 5. Auto-Selection Setup
+final client = await RpsClientBuilder.forWebhook(
+  url: 'https://api.example.com/webhook',
+  apiKey: 'your-api-key',
+  needsPersistence: true,
+  isHighFrequency: true,
+  isLargeData: false,
+  cacheMaxAge: const Duration(hours: 12),
+  logLevel: RpsLogLevel.info,
 );
 
 // Send your data
@@ -626,6 +638,7 @@ final client = await RpsClientBuilder.createOfflineFirst(
   apiKey: 'your-api-key',
   storageType: CacheStorageType.hive,
   cacheMaxAge: const Duration(days: 30),
+  cachePath: '/path/to/your/cache/directory', // Optional: custom cache path
 );
 
 // 🤖 Auto-Selection Setup
@@ -676,6 +689,7 @@ final config = RpsConfigurationBuilder()
       config: {
         'boxName': 'custom_box',
         'autoCompact': true,
+        'path': '/custom/cache/path', // Optional: custom cache path
       },
     )
 
@@ -1014,4 +1028,3 @@ RpsClientBuilder.forWebhook(url, apiKey, needsPersistence, isHighFrequency, isLa
 - `.autoSelectCacheStorage(needsPersistence, isHighFrequency, isLargeData)` - Auto-select
 
 Happy coding! 🎉
-````
