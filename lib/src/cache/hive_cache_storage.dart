@@ -247,7 +247,8 @@ class HiveCacheStorage implements CacheStorage {
         'expiredEntries': expiredCount,
         'validEntries': keys.length - expiredCount,
         'totalSizeBytes': totalSize,
-        'averageSizeBytes': keys.isNotEmpty ? totalSize / keys.length : 0,
+        'averageSizeBytes':
+            keys.isNotEmpty ? (totalSize / keys.length).round() : 0,
       };
     } catch (e) {
       throw CacheStorageException('Error getting cache statistics', e);
