@@ -48,6 +48,23 @@ class CacheManager {
     }
 
     try {
+      // Check if request with same business ID already exists
+      final existingRequests = await getCachedRequests();
+      final businessId = _extractBusinessId(request);
+
+      if (businessId != null) {
+        final duplicateExists = existingRequests.any(
+          (cached) => _extractBusinessId(cached.request) == businessId,
+        );
+
+        if (duplicateExists) {
+          _logger?.debug(
+            'Request with business ID $businessId already cached, skipping duplicate: ${request.id}',
+          );
+          return;
+        }
+      }
+
       await _enforceCapacityLimits();
 
       final cachedRequest = CachedRequest(
@@ -152,6 +169,51 @@ class CacheManager {
       }
     } catch (e) {
       _logger?.error('Failed to process cached requests', error: e);
+    }
+  }
+
+  /// Remove cached requests that have exceeded retry limits or are too old
+  Future<void> cleanupStaleRequests() async {
+    await _ensureInitialized();
+
+    try {
+      final cachedRequests = await getCachedRequests();
+      final maxRetries = 5; // Maximum retry attempts
+      final maxAge = const Duration(days: 7); // Maximum age for cached requests
+
+      int removedCount = 0;
+
+      for (final cachedRequest in cachedRequests) {
+        bool shouldRemove = false;
+        String reason = '';
+
+        // Remove if too many retries
+        if (cachedRequest.retryCount >= maxRetries) {
+          shouldRemove = true;
+          reason = 'exceeded max retries (${cachedRequest.retryCount})';
+        }
+
+        // Remove if too old
+        if (DateTime.now().difference(cachedRequest.cachedAt) > maxAge) {
+          shouldRemove = true;
+          reason =
+              'expired (age: ${DateTime.now().difference(cachedRequest.cachedAt).inDays} days)';
+        }
+
+        if (shouldRemove) {
+          await removeCachedRequest(cachedRequest.id);
+          removedCount++;
+          _logger?.debug(
+            'Removed stale cached request ${cachedRequest.id}: $reason',
+          );
+        }
+      }
+
+      if (removedCount > 0) {
+        _logger?.info('Cleaned up $removedCount stale cached requests');
+      }
+    } catch (e) {
+      _logger?.error('Failed to cleanup stale requests', error: e);
     }
   }
 
@@ -331,6 +393,94 @@ class CacheManager {
 
   String _getRequestKey(String requestId) => 'request_$requestId';
   String _getResponseKey(String key) => 'response_$key';
+
+  /// Extract business ID from request data to prevent duplicate business transactions
+  /// Specifically handles InvoiceModel structure from frontend
+  String? _extractBusinessId(RpsRequest request) {
+    try {
+      final data = request.data;
+
+      // Primary business ID fields - prioritize these for invoice deduplication
+      final primaryFields = [
+        'orderNumber', // Most important for your InvoiceModel
+        'id', // Invoice ID
+        'queueNumber', // Queue number for orders
+      ];
+
+      // Secondary business ID fields
+      final secondaryFields = [
+        'orderId',
+        'order_id',
+        'invoiceId',
+        'invoice_id',
+        'transactionId',
+        'transaction_id',
+        'businessId',
+        'business_id',
+        'referenceId',
+        'reference_id',
+      ];
+
+      // Check primary fields first (these are most important for your use case)
+      for (final field in primaryFields) {
+        final value = data[field];
+        if (value != null) {
+          return value.toString();
+        }
+      }
+
+      // Check secondary fields
+      for (final field in secondaryFields) {
+        final value = data[field];
+        if (value != null) {
+          return value.toString();
+        }
+      }
+
+      // Look nested in 'data' field
+      final nestedDataValue = data['data'];
+      if (nestedDataValue is Map<String, dynamic>) {
+        // Check primary fields in nested data
+        for (final field in primaryFields) {
+          final value = nestedDataValue[field];
+          if (value != null) {
+            return value.toString();
+          }
+        }
+
+        // Check secondary fields in nested data
+        for (final field in secondaryFields) {
+          final value = nestedDataValue[field];
+          if (value != null) {
+            return value.toString();
+          }
+        }
+      }
+
+      // For InvoiceModel, create composite key from multiple fields if individual fields not found
+      final orderNumber =
+          data['orderNumber'] ?? nestedDataValue?['orderNumber'];
+      final queueNumber =
+          data['queueNumber'] ?? nestedDataValue?['queueNumber'];
+      final orderDate = data['orderDate'] ?? nestedDataValue?['orderDate'];
+
+      if (orderNumber != null && orderDate != null) {
+        return '${orderNumber}_${orderDate}';
+      }
+
+      if (queueNumber != null && orderDate != null) {
+        return 'queue_${queueNumber}_${orderDate}';
+      }
+
+      return null;
+    } catch (e) {
+      _logger?.debug(
+        'Failed to extract business ID from request: ${request.id}',
+        error: e,
+      );
+      return null;
+    }
+  }
 
   Future<void> _ensureInitialized() async {
     if (!_initialized) {

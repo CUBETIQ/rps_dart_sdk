@@ -257,6 +257,9 @@ class RpsClient {
       }
 
       try {
+        // Clean up stale requests first
+        await _cacheManager.cleanupStaleRequests();
+
         final cachedRequests = await _cacheManager.getCachedRequests();
         if (cachedRequests.isNotEmpty) {
           _logger?.info('Processing ${cachedRequests.length} cached requests');
@@ -272,9 +275,8 @@ class RpsClient {
               _logger?.warning(
                 'Failed to process cached request: ${cachedRequest.id}',
               );
-              _logger?.error(
-                'Failed to process cached request: ${cachedRequest.id}',
-              );
+              // Update retry count for failed attempts
+              await _cacheManager.processCachedRequests();
             }
           }
         }
