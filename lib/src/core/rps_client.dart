@@ -224,13 +224,13 @@ class RpsClient {
       }
     }
 
-    if (lastError != null &&
-        _cacheManager != null &&
-        (lastError.type == RpsErrorType.network ||
-            lastError.type == RpsErrorType.timeout)) {
+    // Cache ALL retryable errors (including server errors)
+    if (lastError != null && _cacheManager != null && lastError.isRetryable) {
       try {
         await _cacheManager.cacheRequest(request);
-        _logger?.info('Cached failed request for offline retry: ${request.id}');
+        _logger?.info(
+          'Cached failed request for offline retry: ${request.id} (${lastError.type})',
+        );
       } catch (e) {
         _logger?.error(
           'Failed to cache request for offline retry: ${request.id}',

@@ -39,7 +39,7 @@ class CachePolicy {
   /// Creates a cache policy optimized for offline-first applications
   factory CachePolicy.offlineFirst() {
     return const CachePolicy(
-      maxAge: Duration(days: 7),
+      maxAge: Duration(days: 7),  
       maxSize: 5000,
       enableOfflineCache: true,
       evictionPolicy: EvictionPolicy.lru,

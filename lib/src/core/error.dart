@@ -223,19 +223,23 @@ class RpsError extends Error {
   }
 
   /// Determines if an error type is generally retryable
+  /// Updated to be more aggressive - retries almost everything except configuration errors
   static bool _determineRetryability(RpsErrorType type, int? statusCode) {
     switch (type) {
+      // Always retry these
       case RpsErrorType.network:
       case RpsErrorType.timeout:
       case RpsErrorType.serverError:
       case RpsErrorType.rateLimited:
+      case RpsErrorType.authentication: // ✅ Now retryable (might be temporary)
+      case RpsErrorType.clientError: // ✅ Now retryable (server might be fixed)
+      case RpsErrorType.cache: // ✅ Now retryable (cache might recover)
+      case RpsErrorType.unknown: // ✅ Now retryable (unknown = try again)
         return true;
-      case RpsErrorType.authentication:
-      case RpsErrorType.validation:
-      case RpsErrorType.clientError:
-      case RpsErrorType.cache:
-      case RpsErrorType.configuration:
-      case RpsErrorType.unknown:
+
+      // Only DON'T retry these (they need code fixes)
+      case RpsErrorType.validation: // ❌ Bad data - needs code fix
+      case RpsErrorType.configuration: // ❌ Bad config - needs code fix
         return false;
     }
   }
