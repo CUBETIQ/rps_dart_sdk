@@ -85,14 +85,14 @@ class ExponentialBackoffRetryPolicy implements RetryPolicy {
       case RpsErrorType.timeout:
       case RpsErrorType.serverError:
       case RpsErrorType.rateLimited:
-        return true;
-
-      case RpsErrorType.authentication:
-      case RpsErrorType.validation:
+      case RpsErrorType.unknown:
       case RpsErrorType.clientError:
       case RpsErrorType.cache:
+      case RpsErrorType.authentication:
+        return true;
+
+      case RpsErrorType.validation:
       case RpsErrorType.configuration:
-      case RpsErrorType.unknown:
         return false;
     }
   }
@@ -222,14 +222,14 @@ class FixedDelayRetryPolicy implements RetryPolicy {
       case RpsErrorType.timeout:
       case RpsErrorType.serverError:
       case RpsErrorType.rateLimited:
+      case RpsErrorType.cache:
+      case RpsErrorType.authentication:
+      case RpsErrorType.clientError:
+      case RpsErrorType.unknown:
         return true;
 
-      case RpsErrorType.authentication:
       case RpsErrorType.validation:
-      case RpsErrorType.clientError:
-      case RpsErrorType.cache:
       case RpsErrorType.configuration:
-      case RpsErrorType.unknown:
         return false;
     }
   }

@@ -45,7 +45,7 @@ void main() {
       expect(error.message, equals('Invalid API key'));
       expect(error.type, equals(RpsErrorType.authentication));
       expect(error.statusCode, equals(401));
-      expect(error.isRetryable, isFalse); // Auth errors are not retryable
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
       expect(error.requestId, equals('req-456'));
     });
 
@@ -63,7 +63,7 @@ void main() {
       expect(error.code, equals('VALIDATION_ERROR'));
       expect(error.message, equals('Request validation failed'));
       expect(error.type, equals(RpsErrorType.validation));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
       expect(error.details?['validation_errors'], equals(validationErrors));
       expect(error.requestId, equals('req-789'));
     });
@@ -102,8 +102,8 @@ void main() {
       expect(regularClientError.type, equals(RpsErrorType.clientError));
       expect(
         regularClientError.isRetryable,
-        isFalse,
-      ); // Regular client errors are not retryable
+        isTrue, // ✅ ULTRA AGGRESSIVE: Now retryable!
+      );
     });
 
     test('should create timeout error with duration details', () {
@@ -127,7 +127,7 @@ void main() {
 
       expect(error.code, equals('CACHE_ERROR'));
       expect(error.type, equals(RpsErrorType.cache));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
       expect(error.details?['cache_type'], equals('shared_preferences'));
     });
 
@@ -139,7 +139,7 @@ void main() {
 
       expect(error.code, equals('CONFIG_001'));
       expect(error.type, equals(RpsErrorType.configuration));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
     });
 
     test('should copy error with updated properties', () {
@@ -173,7 +173,10 @@ void main() {
       expect(json['type'], equals('authentication'));
       expect(json['status_code'], equals(401));
       expect(json['request_id'], equals('req-123'));
-      expect(json['is_retryable'], isFalse);
+      expect(
+        json['is_retryable'],
+        isTrue,
+      ); // ✅ ULTRA AGGRESSIVE: Now retryable!
       expect(json['timestamp'], isA<String>());
     });
 
@@ -227,7 +230,7 @@ void main() {
 
       expect(error.type, equals(RpsErrorType.authentication));
       expect(error.code, equals('AUTH_ERROR'));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
     });
 
     test('should classify configuration exceptions', () {
@@ -236,7 +239,7 @@ void main() {
 
       expect(error.type, equals(RpsErrorType.configuration));
       expect(error.code, equals('CONFIG_ERROR'));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
     });
 
     test('should classify unknown exceptions', () {
@@ -245,7 +248,7 @@ void main() {
 
       expect(error.type, equals(RpsErrorType.unknown));
       expect(error.code, equals('UNKNOWN_ERROR'));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
     });
 
     test('should return existing RpsError unchanged', () {
@@ -294,11 +297,17 @@ void main() {
 
       expect(unauthorizedError.type, equals(RpsErrorType.authentication));
       expect(unauthorizedError.statusCode, equals(401));
-      expect(unauthorizedError.isRetryable, isFalse);
+      expect(
+        unauthorizedError.isRetryable,
+        isTrue,
+      ); // ✅ ULTRA AGGRESSIVE: Now retryable!
 
       expect(forbiddenError.type, equals(RpsErrorType.authentication));
       expect(forbiddenError.statusCode, equals(403));
-      expect(forbiddenError.isRetryable, isFalse);
+      expect(
+        forbiddenError.isRetryable,
+        isTrue,
+      ); // ✅ ULTRA AGGRESSIVE: Now retryable!
     });
 
     test('should classify HTTP client errors', () {
@@ -306,17 +315,18 @@ void main() {
 
       expect(error.type, equals(RpsErrorType.clientError));
       expect(error.statusCode, equals(400));
-      expect(error.isRetryable, isFalse);
+      expect(error.isRetryable, isTrue); // ✅ ULTRA AGGRESSIVE: Now retryable!
     });
 
     test('should determine retry eligibility correctly', () {
       final retryableError = RpsError.network(message: 'Network error');
-      final nonRetryableError = RpsError.validation(
-        message: 'Validation error',
-      );
+      final validationError = RpsError.validation(message: 'Validation error');
 
       expect(RpsErrorHandler.shouldRetry(retryableError, 1, 3), isTrue);
-      expect(RpsErrorHandler.shouldRetry(nonRetryableError, 1, 3), isFalse);
+      expect(
+        RpsErrorHandler.shouldRetry(validationError, 1, 3),
+        isTrue,
+      ); // ✅ ULTRA AGGRESSIVE: Now retryable!
       expect(
         RpsErrorHandler.shouldRetry(retryableError, 3, 3),
         isFalse,
