@@ -1,5 +1,5 @@
 /// Authentication providers for RPS SDK v2
-/// 
+///
 /// Simplified authentication system focused on RPS API requirements.
 library;
 
@@ -7,7 +7,7 @@ library;
 abstract class RpsAuth {
   /// Get authentication headers for HTTP requests
   Map<String, String> getHeaders();
-  
+
   /// Authentication method name for debugging
   String get method;
 }
@@ -16,28 +16,35 @@ abstract class RpsAuth {
 class RpsApiKeyAuth implements RpsAuth {
   final String _apiKey;
   final String _headerName;
+  final String? _prefix;
 
   /// Create API key authentication
-  /// 
-  /// Common header names:
-  /// - 'X-API-Key' (default)
-  /// - 'Authorization' (for direct auth header)
+  ///
+  /// Common header formats:
+  /// - 'Authorization: Api-Key xxx' (default with prefix)
+  /// - 'X-API-Key: xxx' (headerName: 'X-API-Key', prefix: null)
+  /// - 'Authorization: Bearer xxx' (use RpsBearerAuth instead)
   /// - Custom header names as required by API
   const RpsApiKeyAuth(
     this._apiKey, {
-    String headerName = 'X-API-Key',
-  }) : _headerName = headerName;
+    String headerName = 'Authorization',
+    String? prefix = 'Api-Key',
+  }) : _headerName = headerName,
+       _prefix = prefix;
 
   @override
   Map<String, String> getHeaders() {
-    return {_headerName: _apiKey};
+    final value = _prefix != null ? '$_prefix $_apiKey' : _apiKey;
+    return {_headerName: value};
   }
 
   @override
-  String get method => 'api_key($_headerName)';
+  String get method => _prefix != null
+      ? 'api_key($_headerName: $_prefix)'
+      : 'api_key($_headerName)';
 
   @override
-  String toString() => 'RpsApiKeyAuth(header: $_headerName)';
+  String toString() => 'RpsApiKeyAuth(header: $_headerName, prefix: $_prefix)';
 }
 
 /// Bearer token authentication for RPS API
@@ -65,10 +72,8 @@ class RpsCustomAuth implements RpsAuth {
   final String _methodName;
 
   /// Create custom authentication with specific headers
-  const RpsCustomAuth(
-    this._headers, {
-    String methodName = 'custom',
-  }) : _methodName = methodName;
+  const RpsCustomAuth(this._headers, {String methodName = 'custom'})
+    : _methodName = methodName;
 
   @override
   Map<String, String> getHeaders() {
@@ -84,18 +89,25 @@ class RpsCustomAuth implements RpsAuth {
 
 /// Utility class for creating common RPS authentication methods
 class RpsAuthUtils {
-  /// Create API key authentication with X-API-Key header
+  /// Create API key authentication with Authorization: Api-Key header (default)
   static RpsAuth apiKey(String key) => RpsApiKeyAuth(key);
 
-  /// Create API key authentication with Authorization header (no Bearer prefix)
-  static RpsAuth authHeader(String key) => RpsApiKeyAuth(key, headerName: 'Authorization');
+  /// Create API key authentication with X-API-Key header (no prefix)
+  static RpsAuth xApiKey(String key) =>
+      RpsApiKeyAuth(key, headerName: 'X-API-Key', prefix: null);
+
+  /// Create API key authentication with Authorization header (no prefix)
+  static RpsAuth authHeader(String key) =>
+      RpsApiKeyAuth(key, headerName: 'Authorization', prefix: null);
 
   /// Create Bearer token authentication
   static RpsAuth bearer(String token) => RpsBearerAuth(token);
 
   /// Create custom authentication for specific requirements
-  static RpsAuth custom(Map<String, String> headers, {String name = 'custom'}) =>
-      RpsCustomAuth(headers, methodName: name);
+  static RpsAuth custom(
+    Map<String, String> headers, {
+    String name = 'custom',
+  }) => RpsCustomAuth(headers, methodName: name);
 
   /// Create authentication for query parameter (embedded in URL)
   static RpsAuth queryParam(String paramName, String value) =>
